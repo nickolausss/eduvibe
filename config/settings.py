@@ -78,11 +78,6 @@ YANDEX_PROJECT_ID = os.environ.get('YANDEX_PROJECT_ID', '')
 YANDEX_PROMPT_ID = os.environ.get('YANDEX_PROMPT_ID', '')
 YANDEX_API_KEYS = os.environ.get('YANDEX_API_KEYS', '').split(',')
 
-
-
-
-
-
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
