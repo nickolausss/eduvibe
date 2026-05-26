@@ -78,6 +78,10 @@ YANDEX_PROJECT_ID = os.environ.get('YANDEX_PROJECT_ID', '')
 YANDEX_PROMPT_ID = os.environ.get('YANDEX_PROMPT_ID', '')
 YANDEX_API_KEYS = os.environ.get('YANDEX_API_KEYS', '').split(',')
 
+CSRF_TRUSTED_ORIGINS = ['https://eduvibe-nickolaussss.amvera.io']
+CSRF_COOKIE_SECURE = False
+SESSION_COOKIE_SECURE = False
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
