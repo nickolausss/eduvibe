@@ -77,3 +77,22 @@ YANDEX_API_KEY = os.environ.get('YANDEX_API_KEY', '')
 YANDEX_PROJECT_ID = os.environ.get('YANDEX_PROJECT_ID', '')
 YANDEX_PROMPT_ID = os.environ.get('YANDEX_PROMPT_ID', '')
 YANDEX_API_KEYS = os.environ.get('YANDEX_API_KEYS', '').split(',')
+
+
+
+
+
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'ERROR',
+    },
+}
