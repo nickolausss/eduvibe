@@ -1,0 +1,13 @@
+meta:
+  environment: python
+  toolchain:
+    name: pip
+    version: 3.9
+
+build:
+  requirementsPath: requirements.txt
+
+run:
+  persistenceMount: /data
+  containerPort: 8000
+  command: python manage.py migrate && gunicorn config.wsgi:application -b 0.0.0.0:8000 -w 2
