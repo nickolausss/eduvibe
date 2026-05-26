@@ -40,8 +40,10 @@ class DeepSeekClientPool:
     def get_client(self):
         if not self.clients:
             from openai import OpenAI
+            api_key = settings.YANDEX_API_KEY
+            logger.info(f"YANDEX_API_KEY starts with: {api_key[:10] if api_key else 'EMPTY'}...")
             return OpenAI(
-                api_key=settings.YANDEX_API_KEY,
+                api_key=api_key,
                 base_url="https://ai.api.cloud.yandex.net/v1",
             )
         client_info = self.clients[self.index]
@@ -57,8 +59,10 @@ class DeepSeekClient:
         self.project_id = settings.YANDEX_PROJECT_ID
         if not pool:
             from openai import OpenAI
+            api_key = settings.YANDEX_API_KEY
+            logger.info(f"DeepSeekClient: YANDEX_API_KEY starts with: {api_key[:10] if api_key else 'EMPTY'}...")
             self.client = OpenAI(
-                api_key=settings.YANDEX_API_KEY,
+                api_key=api_key,
                 base_url="https://ai.api.cloud.yandex.net/v1",
             )
 
@@ -395,9 +399,6 @@ class ScenarioVersionService:
         self.scenario = scenario
     
     def create_version(self, change_description='', created_by=''):
-        """
-        Создаёт новую версию — полный снимок текущего состояния сценария.
-        """
         last_version = (
             ScenarioVersion.objects
             .filter(scenario=self.scenario)
@@ -432,10 +433,6 @@ class ScenarioVersionService:
         return version
     
     def restore_version(self, version_number):
-        """
-        Восстанавливает сценарий из указанной версии.
-        При восстановлении создаётся НОВАЯ версия (текущее состояние сохраняется).
-        """
         try:
             target_version = ScenarioVersion.objects.get(
                 scenario=self.scenario,
@@ -444,13 +441,11 @@ class ScenarioVersionService:
         except ScenarioVersion.DoesNotExist:
             raise ValueError(f'Версия {version_number} не найдена')
         
-        # Создаём версию текущего состояния перед восстановлением
         self.create_version(
             change_description=f'Автосохранение перед восстановлением версии {version_number}',
             created_by='system'
         )
         
-        # Восстанавливаем все поля
         self.scenario.title = target_version.title
         self.scenario.legend = target_version.legend
         self.scenario.goals = target_version.goals
@@ -466,7 +461,6 @@ class ScenarioVersionService:
         self.scenario.homework = target_version.homework
         self.scenario.save()
         
-        # Создаём версию восстановленного состояния
         self.create_version(
             change_description=f'Восстановлена версия {version_number}',
             created_by=target_version.created_by
@@ -476,19 +470,14 @@ class ScenarioVersionService:
         return self.scenario
     
     def get_versions(self):
-        """Возвращает список всех версий сценария."""
         return (
             ScenarioVersion.objects
             .filter(scenario=self.scenario)
             .order_by('-version_number')
-            .only(
-                'id', 'version_number', 'change_description',
-                'created_by', 'created_at'
-            )
+            .only('id', 'version_number', 'change_description', 'created_by', 'created_at')
         )
     
     def get_version(self, version_number):
-        """Получает конкретную версию по номеру."""
         try:
             return ScenarioVersion.objects.get(
                 scenario=self.scenario,
@@ -498,7 +487,6 @@ class ScenarioVersionService:
             return None
     
     def get_latest_version(self):
-        """Возвращает последнюю сохранённую версию."""
         return (
             ScenarioVersion.objects
             .filter(scenario=self.scenario)
@@ -507,7 +495,6 @@ class ScenarioVersionService:
         )
     
     def compare_versions(self, version_number_1, version_number_2):
-        """Сравнивает две версии и возвращает различия."""
         v1 = self.get_version(version_number_1)
         v2 = self.get_version(version_number_2)
         
@@ -554,62 +541,28 @@ class ScenarioVersionService:
         }
     
     def delete_version(self, version_number):
-        """
-        Удаляет конкретную версию.
-        Если это последняя версия — удаляет весь сценарий целиком.
-        
-        Args:
-            version_number: номер версии для удаления
-        
-        Returns:
-            dict: {
-                'status': 'deleted' | 'scenario_deleted' | 'error',
-                'message': str
-            }
-        """
         try:
             version = ScenarioVersion.objects.get(
                 scenario=self.scenario,
                 version_number=version_number
             )
         except ScenarioVersion.DoesNotExist:
-            return {
-                'status': 'error',
-                'message': f'Версия {version_number} не найдена'
-            }
+            return {'status': 'error', 'message': f'Версия {version_number} не найдена'}
         
-        # Считаем количество оставшихся версий
-        total_versions = ScenarioVersion.objects.filter(
-            scenario=self.scenario
-        ).count()
+        total_versions = ScenarioVersion.objects.filter(scenario=self.scenario).count()
         
         if total_versions <= 1:
-            # Это последняя версия — удаляем сценарий целиком
             scenario_title = self.scenario.title or self.scenario.theme
             scenario_pk = self.scenario.pk
             self.scenario.delete()
-            logger.info(
-                f'Сценарий "{scenario_title}" (pk={scenario_pk}) '
-                f'удалён вместе с последней версией {version_number}'
-            )
-            return {
-                'status': 'scenario_deleted',
-                'message': f'Сценарий «{scenario_title}» полностью удалён вместе с последней версией'
-            }
+            logger.info(f'Сценарий "{scenario_title}" (pk={scenario_pk}) удалён вместе с последней версией {version_number}')
+            return {'status': 'scenario_deleted', 'message': f'Сценарий «{scenario_title}» полностью удалён вместе с последней версией'}
         
-        # Удаляем только эту версию
         version.delete()
-        logger.info(
-            f'Удалена версия {version_number} сценария {self.scenario.pk}. '
-            f'Осталось версий: {total_versions - 1}'
-        )
-        return {
-            'status': 'deleted',
-            'message': f'Версия {version_number} удалена. Осталось версий: {total_versions - 1}'
-        }
+        logger.info(f'Удалена версия {version_number} сценария {self.scenario.pk}. Осталось версий: {total_versions - 1}')
+        return {'status': 'deleted', 'message': f'Версия {version_number} удалена. Осталось версий: {total_versions - 1}'}
     
     def _cleanup_old_versions(self):
-        """Удаляет самые старые версии, если их количество превышает MAX_VERSIONS."""
         total = ScenarioVersion.objects.filter(scenario=self.scenario).count()
         
         if total > self.MAX_VERSIONS:
