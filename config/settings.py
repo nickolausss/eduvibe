@@ -4,9 +4,9 @@ import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = config('SECRET_KEY')
-DEBUG = config('DEBUG', default=False, cast=bool)
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='', cast=Csv())
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-default-key-change-me')
+DEBUG = os.environ.get('DEBUG', 'False').lower() in ('true', '1', 'yes')
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -15,7 +15,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # Наши приложения
     'core.apps.CoreConfig',
     'scenarios.apps.ScenariosConfig',
 ]
@@ -35,7 +34,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],  # Папка с шаблонами
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -73,8 +72,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Yandex Cloud API для DeepSeek
-YANDEX_API_KEY = config('YANDEX_API_KEY', default='')
-YANDEX_PROJECT_ID = config('YANDEX_PROJECT_ID', default='')
-YANDEX_PROMPT_ID = config('YANDEX_PROMPT_ID', default='')
-YANDEX_API_KEYS = config('YANDEX_API_KEYS', default='').split(',')
+YANDEX_API_KEY = os.environ.get('YANDEX_API_KEY', '')
+YANDEX_PROJECT_ID = os.environ.get('YANDEX_PROJECT_ID', '')
+YANDEX_PROMPT_ID = os.environ.get('YANDEX_PROMPT_ID', '')
+YANDEX_API_KEYS = os.environ.get('YANDEX_API_KEYS', '').split(',')
