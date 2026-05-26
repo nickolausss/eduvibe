@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Презентация: {{ scenario.title|default:scenario.theme }}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            user-select: none;
+        }
+        
+        .slide-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            width: 100vw;
+            transition: opacity 0.3s;
+        }
+        
+        .slide {
+            max-width: 900px;
+            width: 90%;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .slide-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        
+        .slide-title {
+            font-size: clamp(1.8rem, 4vw, 3rem);
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .slide-subtitle {
+            font-size: 1.2rem;
+            color: #94a3b8;
+            margin-bottom: 2rem;
+        }
+        
+        .slide-content {
+            font-size: clamp(1rem, 2.5vw, 1.3rem);
+            line-height: 1.8;
+            text-align: left;
+            color: #cbd5e1;
+        }
+        .slide-content h3 {
+            font-size: 1.2rem;
+            color: #3b82f6;
+            margin: 1rem 0 0.5rem;
+        }
+        .slide-content ul, .slide-content ol {
+            margin: 0.5rem 0 1rem 1.5rem;
+        }
+        .slide-content li {
+            margin: 0.4rem 0;
+        }
+        .slide-content p {
+            margin: 0.5rem 0;
+        }
+        .slide-content strong {
+            color: #e2e8f0;
+        }
+        
+        /* Навигация */
+        .nav-hint {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            background: rgba(255,255,255,0.05);
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            z-index: 10;
+        }
+        .nav-hint span {
+            color: #64748b;
+            font-size: 0.85rem;
+        }
+        .nav-hint .key {
+            background: rgba(255,255,255,0.1);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            color: #e2e8f0;
+            font-weight: 600;
+        }
+        .nav-hint .counter {
+            color: #94a3b8;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        .exit-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #e2e8f0;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            z-index: 10;
+            transition: background 0.2s;
+        }
+        .exit-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            transition: width 0.3s;
+            z-index: 10;
+        }
+        
+        @media (max-width: 640px) {
+            .slide { padding: 1rem; }
+            .slide-icon { font-size: 3rem; }
+            .nav-hint { padding: 0.4rem 1rem; gap: 0.5rem; }
+            .nav-hint span { font-size: 0.7rem; }
+            .exit-btn { top: 10px; right: 10px; font-size: 0.8rem; padding: 0.4rem 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+    <button class="exit-btn" onclick="exitPresentation()">✕ Выйти</button>
+    
+    <div class="slide-container" id="slideContainer">
+        <div class="slide" id="slideContent"></div>
+    </div>
+    
+    <div class="nav-hint">
+        <span>←</span> <span class="key">←</span>
+        <span class="counter" id="slideCounter">1 / 1</span>
+        <span class="key">→</span> <span>→</span>
+        <span style="margin: 0 0.5rem;">|</span>
+        <span class="key">Esc</span> <span>выход</span>
+    </div>
+
+    <script>
+        const slides = {{ slides_json|safe }};
+        let currentSlide = 0;
+        const total = slides.length;
+        
+        const container = document.getElementById('slideContent');
+        const counter = document.getElementById('slideCounter');
+        const progressBar = document.getElementById('progressBar');
+        
+        function showSlide(index) {
+            if (index < 0) index = 0;
+            if (index >= total) index = total - 1;
+            currentSlide = index;
+            
+            const slide = slides[currentSlide];
+            let html = '';
+            
+            if (slide.icon) {
+                html += `<div class="slide-icon">${slide.icon}</div>`;
+            }
+            
+            html += `<h1 class="slide-title">${slide.title}</h1>`;
+            
+            if (slide.subtitle) {
+                html += `<p class="slide-subtitle">${slide.subtitle}</p>`;
+            }
+            
+            if (slide.content) {
+                html += `<div class="slide-content">${slide.content}</div>`;
+            }
+            
+            container.innerHTML = html;
+            counter.textContent = `${currentSlide + 1} / ${total}`;
+            progressBar.style.width = `${((currentSlide + 1) / total) * 100}%`;
+        }
+        
+        function nextSlide() {
+            if (currentSlide < total - 1) {
+                showSlide(currentSlide + 1);
+            }
+        }
+        
+        function prevSlide() {
+            if (currentSlide > 0) {
+                showSlide(currentSlide - 1);
+            }
+        }
+        
+        function exitPresentation() {
+            window.close();
+            // Fallback если window.close не сработает
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = '/scenarios/{{ scenario.pk }}/';
+            }
+        }
+        
+        // Клавиатура
+        document.addEventListener('keydown', function(e) {
+            switch(e.key) {
+                case 'ArrowRight':
+                case ' ':
+                    e.preventDefault();
+                    nextSlide();
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    prevSlide();
+                    break;
+                case 'Escape':
+                    exitPresentation();
+                    break;
+                case 'Home':
+                    e.preventDefault();
+                    showSlide(0);
+                    break;
+                case 'End':
+                    e.preventDefault();
+                    showSlide(total - 1);
+                    break;
+            }
+        });
+        
+        // Свайпы на мобильных
+        let touchStartX = 0;
+        document.addEventListener('touchstart', function(e) {
+            touchStartX = e.touches[0].clientX;
+        });
+        document.addEventListener('touchend', function(e) {
+            const diff = touchStartX - e.changedTouches[0].clientX;
+            if (Math.abs(diff) > 50) {
+                if (diff > 0) nextSlide();
+                else prevSlide();
+            }
+        });
+        
+        // Клик по бокам
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.exit-btn') || e.target.closest('.nav-hint')) return;
+            const x = e.clientX;
+            if (x > window.innerWidth * 0.7) nextSlide();
+            else if (x < window.innerWidth * 0.3) prevSlide();
+        });
+        
+        showSlide(0);
+    </script>
+</body>
+</html>

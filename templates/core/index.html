@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="hero">
+    <div class="container">
+        <div class="hero-content">
+            <div class="hero-badge">✨ ИИ-генератор сценариев</div>
+            <h1 class="hero-title">Готовые сценарии внеурочных занятий за 40-120 секунд</h1>
+            <p class="hero-desc">Больше не тратьте 2-3 часа на подготовку. Просто укажите тему, класс и формат — и через 40-120 секунд получите готовый сценарий с легендой, этапами, репликами учителя и ответами детей. Распечатайте и проведите занятие!</p>
+            <div class="hero-actions">
+                <a href="{% url 'scenario-create' %}" class="btn btn-primary btn-lg">Создать сценарий</a>
+                <a href="{% url 'about' %}" class="btn btn-outline btn-lg">Узнать больше</a>
+            </div>
+        </div>
+        <div class="hero-image">
+            <div class="hero-card">
+                <div class="hero-card-item">
+                    <strong>Патриотическое, 7 класс</strong>
+                    <p style="color: hsl(var(--muted-foreground)); margin-top: 0.25rem;">«Герои нашего времени»</p>
+                </div>
+                <div class="hero-card-item ai">
+                    <strong>✨ YandexGPT 5.1 Pro создаёт...</strong>
+                    <div class="checklist">
+                        <p>✓ 14 разделов сценария</p>
+                        <p>✓ Прямая речь учителя</p>
+                        <p>✓ Вопросы и ответы детей</p>
+                        <p>✓ Адаптация под 1-11 классы</p>
+                        <p>✓ Чек-лист подготовки</p>
+                    </div>
+                </div>
+                <div class="hero-card-item">
+                    <strong>Готово!</strong>
+                    <p style="color: hsl(var(--muted-foreground)); margin-top: 0.25rem;">Скачивайте PDF, печатайте, проводите занятие</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="features">
+    <div class="container">
+        <div class="features-header">
+            <h2>Что умеет EduVibe</h2>
+            <p>Сервис создаёт полный сценарий, который можно распечатать и сразу провести занятие</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h3>Быстрая генерация</h3>
+                <p>6 запросов к YandexGPT 5.1 Pro параллельно. Готовый сценарий за 40-120 секунд вместо 2-3 часов ручной подготовки.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🤖</div>
+                <h3>Учёт ФГОС и СанПиН</h3>
+                <p>Нейросеть знает требования к внеурочной деятельности. Сценарии соответствуют профстандарту «Педагог» и санитарным нормам.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📋</div>
+                <h3>8 направлений × 8 форматов</h3>
+                <p>От патриотического до экологического. Классный час, квиз, игра, дебаты, мастерская, киноклуб, беседа, проектная сессия — выбирайте что нужно.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">✏️</div>
+                <h3>WYSIWYG-редактор</h3>
+                <p>Редактируйте любой раздел сценария как в Word. Жирный текст, курсив, списки, заголовки — всё что нужно для оформления.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📅</div>
+                <h3>Календарь занятий</h3>
+                <p>Привязывайте сценарии к датам. Загрузите план воспитательной работы — сервис сам раскидает темы по календарю и найдёт ближайшую.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📜</div>
+                <h3>История версий</h3>
+                <p>Каждое сохранение создаёт новую версию. Испортили правки? Восстановите любую предыдущую версию в один клик.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📤</div>
+                <h3>Экспорт в PDF и DOCX</h3>
+                <p>Скачайте сценарий для печати или отправьте коллегам. К каждому документу прилагается QR-код для открытия на планшете.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3>Статистика</h3>
+                <p>Наглядные графики: какие направления используете чаще, с какими классами работаете. Вся аналитика в одном разделе.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔒</div>
+                <h3>Безопасность данных</h3>
+                <p>Каждый педагог видит только свои сценарии. Персональная ссылка открывает доступ с любого устройства без пароля.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section style="padding: 4rem 0; background: hsl(var(--background));">
+    <div class="container" style="max-width: 800px;">
+        <div style="text-align: center; margin-bottom: 3rem;">
+            <h2 style="font-size: clamp(1.5rem, 3vw, 2rem); margin-bottom: 0.75rem;">Вопросы и ответы</h2>
+            <p style="color: hsl(var(--muted-foreground));">Всё, что вы хотели узнать о сервисе</p>
+        </div>
+        
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <details class="faq-item">
+                <summary>Сколько времени занимает генерация сценария?</summary>
+                <p>Около 40-120 секунд. Сервис отправляет 6 запросов к YandexGPT 5.1 Pro параллельно — структура, этапы, рефлексия, риски и чек-лист создаются одновременно.</p>
+            </details>
+            
+            <details class="faq-item">
+                <summary>Нужно ли регистрироваться?</summary>
+                <p>Нет. Все сценарии сохраняются автоматически в вашем браузере. Вы можете закрыть вкладку и вернуться через неделю — всё будет на месте. Для синхронизации между устройствами используйте персональную ссылку.</p>
+            </details>
+            
+            <details class="faq-item">
+                <summary>В каких форматах можно скачать сценарий?</summary>
+                <p>В PDF для печати и DOCX для редактирования на компьютере.</p>
+            </details>
+            
+            <details class="faq-item">
+                <summary>Есть ли ограничения по количеству генераций?</summary>
+                <p>Да, 20 сценариев в день. Это защита от перегрузки нейросети. Счётчик оставшихся запросов виден на странице создания. Для подготовки на месяц вперёд хватает с запасом.</p>
+            </details>
+            
+            <details class="faq-item">
+                <summary>Можно ли редактировать сгенерированный сценарий?</summary>
+                <p>Да, встроенный WYSIWYG-редактор позволяет править любой раздел: менять этапы, добавлять вопросы, переписывать реплики учителя. Каждое сохранение создаёт новую версию — можно откатиться назад.</p>
+            </details>
+            
+            <details class="faq-item">
+                <summary>Подходит ли сервис для начальной школы?</summary>
+                <p>Да. Нейросеть адаптирует сценарий под любой класс с 1 по 11. Для младших — простые инструкции, игры и физкультминутки каждые 10 минут. Для старших — дискуссии, проектная работа и дебаты.</p>
+            </details>
+            
+            <details class="faq-item">
+                <summary>Как загрузить план воспитательной работы?</summary>
+                <p>На странице календаря нажмите «Вставить план» и загрузите файл в любом формате: TXT, DOCX, PDF или PPTX. Сервис распознает даты и темы, раскидает их по календарю и подсветит ближайшую незакрытую тему.</p>
+            </details>
+            
+            <details class="faq-item">
+                <summary>Соответствуют ли сценарии требованиям ФГОС?</summary>
+                <p>Да. Промпты для нейросети составлены с учётом ФГОС, профстандарта «Педагог» (приказ Минтруда №544н), примерной программы воспитания и СанПиН 2.4.3648-20. Сценарий содержит воспитательные цели, личностные результаты и учёт возрастных особенностей.</p>
+            </details>
+        </div>
+    </div>
+</section>
+
+<section class="cta">
+    <div class="container">
+        <div class="cta-box">
+            <div>
+                <h2>Готовы попробовать?</h2>
+                <p>Создайте первый сценарий за 40-120 секунд. Бесплатно. Без регистрации.</p>
+            </div>
+            <a href="{% url 'scenario-create' %}" class="btn btn-primary btn-lg">Создать сценарий</a>
+        </div>
+    </div>
+</section>
+
+<style>
+    .faq-item {
+        background: hsl(var(--card));
+        border: 1px solid hsl(var(--border));
+        border-radius: 10px;
+        padding: 0;
+        overflow: hidden;
+    }
+    .faq-item summary {
+        padding: 1rem 1.25rem;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.95rem;
+        color: hsl(var(--foreground));
+        list-style: none;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .faq-item summary::-webkit-details-marker { display: none; }
+    .faq-item summary::after {
+        content: '+';
+        font-size: 1.2rem;
+        color: hsl(var(--primary));
+        font-weight: 700;
+        transition: transform 0.2s;
+    }
+    .faq-item[open] summary::after {
+        content: '−';
+    }
+    .faq-item p {
+        padding: 0 1.25rem 1.25rem;
+        color: hsl(var(--muted-foreground));
+        font-size: 0.9rem;
+        line-height: 1.7;
+    }
+</style>
+{% endblock %}

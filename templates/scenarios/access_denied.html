@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+<section style="padding: 3rem 0;">
+    <div class="container" style="text-align: center;">
+        <h2>🔒 Доступ закрыт</h2>
+        <p style="color: hsl(var(--muted-foreground)); margin-top: 1rem;">
+            Этот сценарий не найден или у вас нет доступа к нему.
+        </p>
+        <p style="color: hsl(var(--muted-foreground));">
+            Попросите автора отправить правильную ссылку или создайте свой сценарий.
+        </p>
+        <a href="{% url 'scenario-create' %}" class="btn btn-primary" style="margin-top: 1.5rem;">Создать сценарий</a>
+    </div>
+</section>
+{% endblock %}

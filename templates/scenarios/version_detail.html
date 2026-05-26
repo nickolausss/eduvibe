@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section style="padding: 3rem 0;">
+    <div class="container" style="max-width: 800px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <div>
+                <h2 style="margin: 0;">Версия {{ version.version_number }}</h2>
+                <p style="color: hsl(var(--muted-foreground)); font-size: 0.9rem;">
+                    {{ version.created_at|date:"d.m.Y H:i" }}
+                    {% if version.change_description %}— {{ version.change_description }}{% endif %}
+                </p>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+                <button onclick="restoreVersion({{ version.version_number }})" class="btn btn-outline">🔄 Восстановить эту версию</button>
+                <a href="{% url 'scenario-versions' scenario.pk %}" class="btn btn-outline">← К списку версий</a>
+            </div>
+        </div>
+
+        {% if version.title %}
+            <h2>{{ version.title }}</h2>
+        {% endif %}
+
+        <div class="scenario-meta">
+            <span class="badge">{{ scenario.get_direction_display }}</span>
+            <span class="badge">{{ scenario.get_format_type_display }}</span>
+            <span class="badge">{{ scenario.grade }} класс</span>
+            <span class="badge">{{ scenario.duration }} мин.</span>
+        </div>
+
+        <p style="color: hsl(var(--muted-foreground));"><strong>Тема:</strong> {{ scenario.theme }}</p>
+
+        {% if legend %}
+            <div class="card"><h3>📖 Легенда</h3><p>{{ legend }}</p></div>
+        {% endif %}
+
+        {% if goals %}
+            <div class="card">
+                <h3>🎯 Цели</h3>
+                {% if goals.educational %}<p><strong>Воспитательная:</strong> {{ goals.educational }}</p>{% endif %}
+                {% if goals.practical %}<p style="margin-top: 0.5rem;"><strong>Практическая:</strong> {{ goals.practical }}</p>{% endif %}
+                {% if goals.soft_skills %}<p style="margin-top: 0.5rem;"><strong>Soft Skills:</strong> {{ goals.soft_skills }}</p>{% endif %}
+            </div>
+        {% endif %}
+
+        {% if stages %}
+            <div class="card">
+                <h3>📋 Этапы ({{ stages|length }})</h3>
+                {% for stage in stages %}
+                    <div class="stage">
+                        <div class="stage-header">
+                            <strong>{{ stage.name }}</strong>
+                            <span class="stage-meta">{{ stage.duration_minutes }} мин. · {{ stage.type }}</span>
+                        </div>
+                        {% if stage.description %}<p style="color: hsl(var(--muted-foreground)); margin: 0.5rem 0;">{{ stage.description }}</p>{% endif %}
+                        {% if stage.teacher_actions %}<details open><summary>👩‍🏫 Действия учителя</summary><ul>{% for action in stage.teacher_actions %}<li>{{ action }}</li>{% endfor %}</ul></details>{% endif %}
+                        {% if stage.student_actions %}<details open><summary>👦 Действия учеников</summary><ul>{% for action in stage.student_actions %}<li>{{ action }}</li>{% endfor %}</ul></details>{% endif %}
+                        {% if stage.questions %}<details open><summary>💬 Вопросы и ответы</summary><ul>{% for q in stage.questions %}<li>{{ q }}</li>{% endfor %}</ul></details>{% endif %}
+                        {% if stage.materials %}<p style="color: hsl(var(--muted-foreground)); font-size: 0.85rem; margin-top: 0.5rem;"><strong>📦 Материалы:</strong> {{ stage.materials|join:"; " }}</p>{% endif %}
+                        {% if stage.mechanics %}<p style="color: hsl(var(--muted-foreground)); font-size: 0.85rem;"><strong>🎮 Механика:</strong> {{ stage.mechanics }}</p>{% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% if materials %}
+            <div class="card">
+                <h3>📦 Материалы и ресурсы</h3>
+                {% if materials.equipment %}<details open><summary>🔌 Оборудование</summary><ul>{% for item in materials.equipment %}<li>{{ item }}</li>{% endfor %}</ul></details>{% endif %}
+                {% if materials.stationery %}<details open><summary>✂️ Канцелярия</summary><ul>{% for item in materials.stationery %}<li>{{ item }}</li>{% endfor %}</ul></details>{% endif %}
+                {% if materials.digital %}<details open><summary>💻 Цифровые ресурсы</summary><ul>{% for item in materials.digital %}<li>{{ item }}</li>{% endfor %}</ul></details>{% endif %}
+                {% if materials.props %}<details open><summary>🎭 Реквизит</summary><ul>{% for item in materials.props %}<li>{{ item }}</li>{% endfor %}</ul></details>{% endif %}
+            </div>
+        {% endif %}
+
+        {% if reflection %}
+            <div class="card">
+                <h3>🔄 Рефлексия</h3>
+                {% if reflection.method %}<p><strong>Метод:</strong> {{ reflection.method }}</p>{% endif %}
+                {% if reflection.questions %}<p style="margin-top: 0.5rem;"><strong>Вопросы:</strong></p><ul>{% for q in reflection.questions %}<li>{{ q }}</li>{% endfor %}</ul>{% endif %}
+                {% if reflection.teacher_script %}<details open><summary>👩‍🏫 Слова учителя</summary><p>{{ reflection.teacher_script }}</p></details>{% endif %}
+            </div>
+        {% endif %}
+
+        {% if adaptation %}
+            <div class="card">
+                <h3>🔧 Адаптация</h3>
+                {% if adaptation.for_juniors %}<details open><summary>Для 5-6 классов</summary><p>{{ adaptation.for_juniors }}</p></details>{% endif %}
+                {% if adaptation.for_seniors %}<details open><summary>Для 10-11 классов</summary><p>{{ adaptation.for_seniors }}</p></details>{% endif %}
+                {% if adaptation.for_ovz %}<details open><summary>Для детей с ОВЗ</summary><p>{{ adaptation.for_ovz }}</p></details>{% endif %}
+            </div>
+        {% endif %}
+
+        {% if risks %}
+            <div class="card">
+                <h3>⚠️ Риски и запасные варианты</h3>
+                {% if risks.technical %}<details open><summary>🔧 Технический риск</summary><p>{{ risks.technical }}</p></details>{% endif %}
+                {% if risks.methodical %}<details open><summary>📝 Методический риск</summary><p>{{ risks.methodical }}</p></details>{% endif %}
+                {% if risks.dynamic %}<details open><summary>⚡ Динамический риск</summary><p>{{ risks.dynamic }}</p></details>{% endif %}
+                {% if risks.conflict %}<details open><summary>🤝 Конфликтный риск</summary><p>{{ risks.conflict }}</p></details>{% endif %}
+            </div>
+        {% endif %}
+
+        {% if assessment %}
+            <div class="card">
+                <h3>📊 Оценка эффективности</h3>
+                {% if assessment.quantitative %}<p><strong>Количественная:</strong> {{ assessment.quantitative }}</p>{% endif %}
+                {% if assessment.qualitative %}<p style="margin-top: 0.5rem;"><strong>Качественная:</strong> {{ assessment.qualitative }}</p>{% endif %}
+            </div>
+        {% endif %}
+
+        {% if teacher_tips %}
+            <div class="card"><h3>💡 Советы учителю</h3><ol>{% for tip in teacher_tips %}<li>{{ tip }}</li>{% endfor %}</ol></div>
+        {% endif %}
+
+        {% if host_script %}
+            <div class="card"><h3>🎤 Сценарий для ведущего</h3><details><summary>Показать полный текст</summary><p style="white-space: pre-line;">{{ host_script }}</p></details></div>
+        {% endif %}
+
+        {% if checklist %}
+            <div class="card">
+                <h3>✅ Чек-лист подготовки</h3>
+                {% if checklist.week_before %}<details open><summary>За неделю</summary><ul>{% for item in checklist.week_before %}<li>{{ item }}</li>{% endfor %}</ul></details>{% endif %}
+                {% if checklist.day_before %}<details open><summary>За день</summary><ul>{% for item in checklist.day_before %}<li>{{ item }}</li>{% endfor %}</ul></details>{% endif %}
+                {% if checklist.hour_before %}<details open><summary>За час</summary><ul>{% for item in checklist.hour_before %}<li>{{ item }}</li>{% endfor %}</ul></details>{% endif %}
+                {% if checklist.five_minutes %}<details open><summary>За 5 минут</summary><ul>{% for item in checklist.five_minutes %}<li>{{ item }}</li>{% endfor %}</ul></details>{% endif %}
+            </div>
+        {% endif %}
+
+        {% if homework and homework.variants %}
+            <div class="card">
+                <h3>🏠 Домашнее задание</h3>
+                {% for variant in homework.variants %}
+                    <div class="stage">
+                        <strong>{{ variant.title }}</strong>
+                        <p style="color: hsl(var(--muted-foreground)); margin-top: 0.25rem;">{{ variant.description }}</p>
+                        {% if variant.materials %}<p style="font-size: 0.85rem; color: hsl(var(--muted-foreground));"><strong>Понадобится:</strong> {{ variant.materials }}</p>{% endif %}
+                        {% if variant.deadline %}<p style="font-size: 0.85rem; color: hsl(var(--muted-foreground));"><strong>Срок:</strong> {{ variant.deadline }}</p>{% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+</section>
+
+<script>
+function restoreVersion(versionNumber) {
+    if (!confirm(`Восстановить сценарий до версии ${versionNumber}? Текущая версия будет сохранена.`)) {
+        return;
+    }
+    
+    fetch(`/scenarios/{{ scenario.pk }}/versions/${versionNumber}/restore/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCSRFToken() }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            window.location.href = `/scenarios/{{ scenario.pk }}/`;
+        } else {
+            alert('Ошибка: ' + (data.error || 'не удалось восстановить'));
+        }
+    });
+}
+
+function getCSRFToken() {
+    const cookie = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
+    return cookie ? cookie.split('=')[1] : '';
+}
+</script>
+{% endblock %}

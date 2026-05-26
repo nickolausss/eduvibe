@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section style="padding: 3rem 0;">
+    <div class="container" style="max-width: 800px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h2 style="margin: 0;">История версий</h2>
+            <a href="{% url 'scenario-detail' scenario.pk %}" class="btn btn-outline">← К сценарию</a>
+        </div>
+        
+        <p style="color: hsl(var(--muted-foreground)); margin-bottom: 2rem;">
+            {{ scenario.title|default:scenario.theme }}
+        </p>
+        
+        {% if versions %}
+            <div class="card" style="padding: 0; overflow: hidden;">
+                <table style="margin: 0; border: none;">
+                    <thead>
+                        <tr>
+                            <th>Версия</th>
+                            <th>Описание</th>
+                            <th>Дата</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for version in versions %}
+                            <tr>
+                                <td>
+                                    <strong>v{{ version.version_number }}</strong>
+                                    {% if forloop.first %}
+                                        <span class="badge" style="background: hsl(142, 76%, 90%); color: hsl(142, 76%, 25%);">Текущая</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ version.change_description|default:"—" }}</td>
+                                <td style="font-size: 0.85rem; color: hsl(var(--muted-foreground));">
+                                    {{ version.created_at|date:"d.m.Y H:i" }}
+                                </td>
+                                <td style="display: flex; gap: 0.35rem; flex-wrap: wrap;">
+                                    <a href="{% url 'scenario-version-detail' scenario.pk version.version_number %}" class="btn btn-sm btn-outline">Смотреть</a>
+                                    {% if not forloop.first %}
+                                        <button onclick="restoreVersion({{ version.version_number }})" class="btn btn-sm btn-outline">Восстановить</button>
+                                    {% endif %}
+                                    <button onclick="deleteVersion({{ version.version_number }})" class="btn btn-sm btn-outline" style="color: red;">Удалить</button>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="card" style="text-align: center; padding: 3rem;">
+                <p style="color: hsl(var(--muted-foreground));">История версий пуста. Сохраните сценарий, чтобы создать первую версию.</p>
+            </div>
+        {% endif %}
+    </div>
+</section>
+
+<script>
+function restoreVersion(versionNumber) {
+    if (!confirm(`Восстановить сценарий до версии ${versionNumber}? Текущая версия будет сохранена.`)) {
+        return;
+    }
+    
+    fetch(`/scenarios/{{ scenario.pk }}/versions/${versionNumber}/restore/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCSRFToken() }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            window.location.reload();
+        } else {
+            alert('Ошибка: ' + (data.error || 'не удалось восстановить'));
+        }
+    });
+}
+
+function deleteVersion(versionNumber) {
+    const totalVersions = {{ versions|length }};
+    
+    if (totalVersions <= 1) {
+        if (!confirm('Это последняя версия. При удалении сценарий будет удалён полностью. Продолжить?')) {
+            return;
+        }
+    } else {
+        if (!confirm(`Удалить версию ${versionNumber}? Это действие нельзя отменить.`)) {
+            return;
+        }
+    }
+    
+    fetch(`/scenarios/{{ scenario.pk }}/versions/${versionNumber}/delete/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCSRFToken() }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'scenario_deleted') {
+            window.location.href = '/scenarios/';
+        } else if (data.status === 'success') {
+            window.location.reload();
+        } else {
+            alert('Ошибка: ' + (data.error || 'не удалось удалить'));
+        }
+    });
+}
+
+function getCSRFToken() {
+    const cookie = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
+    return cookie ? cookie.split('=')[1] : '';
+}
+</script>
+{% endblock %}

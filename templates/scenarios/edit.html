@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section style="padding: 2rem 0;">
+    <div class="container" style="max-width: 900px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.5rem;">
+            <h2 style="font-size: clamp(1.2rem, 3vw, 1.5rem); margin: 0;">Редактирование</h2>
+            <a href="{% url 'scenario-versions' scenario.pk %}" class="btn btn-outline btn-sm">История версий</a>
+        </div>
+        <p style="color: hsl(var(--muted-foreground)); margin-bottom: 1.5rem; font-size: 0.9rem;">{{ scenario.title|default:scenario.theme }}</p>
+
+        <form method="post" id="edit-form">
+            {% csrf_token %}
+
+            <div class="card edit-card" draggable="true" style="margin-bottom: 1rem;">
+                <div class="edit-header"><span class="drag-handle">⠿</span><strong>Название</strong></div>
+                <input type="text" name="title" value="{{ scenario.title }}" style="width: 100%; padding: 0.6rem; border: 1px solid hsl(var(--border)); border-radius: 6px; font-size: 0.95rem; background: hsl(var(--card)); color: hsl(var(--card-foreground));">
+            </div>
+
+            <div class="card edit-card" draggable="true" style="margin-bottom: 1rem;">
+                <div class="edit-header"><span class="drag-handle">⠿</span><strong>Легенда</strong></div>
+                <div id="editor-legend" class="wysiwyg-editor"></div>
+                <textarea name="legend" id="input-legend" style="display: none;">{{ legend|default:'' }}</textarea>
+            </div>
+
+            <div class="card edit-card" draggable="true" style="margin-bottom: 1rem;">
+                <div class="edit-header"><span class="drag-handle">⠿</span><strong>Цели</strong></div>
+                <div id="editor-goals" class="wysiwyg-editor"></div>
+                <textarea name="goals" id="input-goals" style="display: none;">{{ goals|default:'' }}</textarea>
+            </div>
+
+            <div class="card edit-card" draggable="true" style="margin-bottom: 1rem;">
+                <div class="edit-header"><span class="drag-handle">⠿</span><strong>Этапы</strong></div>
+                <div id="editor-stages" class="wysiwyg-editor"></div>
+                <textarea name="stages" id="input-stages" style="display: none;">{{ stages|default:'' }}</textarea>
+            </div>
+
+            <div class="card edit-card" draggable="true" style="margin-bottom: 1rem;">
+                <div class="edit-header"><span class="drag-handle">⠿</span><strong>Материалы и ресурсы</strong></div>
+                <div id="editor-materials" class="wysiwyg-editor"></div>
+                <textarea name="materials" id="input-materials" style="display: none;">{{ materials|default:'' }}</textarea>
+            </div>
+
+            <div class="card edit-card" draggable="true" style="margin-bottom: 1rem;">
+                <div class="edit-header"><span class="drag-handle">⠿</span><strong>Адаптация</strong></div>
+                <div id="editor-adaptation" class="wysiwyg-editor"></div>
+                <textarea name="adaptation" id="input-adaptation" style="display: none;">{{ adaptation|default:'' }}</textarea>
+            </div>
+
+            <div class="card edit-card" draggable="true" style="margin-bottom: 1rem;">
+                <div class="edit-header"><span class="drag-handle">⠿</span><strong>Рефлексия</strong></div>
+                <div id="editor-reflection" class="wysiwyg-editor"></div>
+                <textarea name="reflection" id="input-reflection" style="display: none;">{{ reflection|default:'' }}</textarea>
+            </div>
+
+            <div class="card edit-card" draggable="true" style="margin-bottom: 1rem;">
+                <div class="edit-header"><span class="drag-handle">⠿</span><strong>Риски</strong></div>
+                <div id="editor-risks" class="wysiwyg-editor"></div>
+                <textarea name="risks" id="input-risks" style="display: none;">{{ risks|default:'' }}</textarea>
+            </div>
+
+            <div class="card edit-card" draggable="true" style="margin-bottom: 1rem;">
+                <div class="edit-header"><span class="drag-handle">⠿</span><strong>Оценка</strong></div>
+                <div id="editor-assessment" class="wysiwyg-editor"></div>
+                <textarea name="assessment" id="input-assessment" style="display: none;">{{ assessment|default:'' }}</textarea>
+            </div>
+
+            <div class="card edit-card" draggable="true" style="margin-bottom: 1rem;">
+                <div class="edit-header"><span class="drag-handle">⠿</span><strong>Советы</strong></div>
+                <div id="editor-teacher-tips" class="wysiwyg-editor"></div>
+                <textarea name="teacher_tips" id="input-teacher-tips" style="display: none;">{{ teacher_tips|default:'' }}</textarea>
+            </div>
+
+            <div class="card edit-card" draggable="true" style="margin-bottom: 1rem;">
+                <div class="edit-header"><span class="drag-handle">⠿</span><strong>Сценарий для ведущего</strong></div>
+                <div id="editor-host-script" class="wysiwyg-editor"></div>
+                <textarea name="host_script" id="input-host-script" style="display: none;">{{ host_script|default:'' }}</textarea>
+            </div>
+
+            <div class="card edit-card" draggable="true" style="margin-bottom: 1rem;">
+                <div class="edit-header"><span class="drag-handle">⠿</span><strong>Чек-лист</strong></div>
+                <div id="editor-checklist" class="wysiwyg-editor"></div>
+                <textarea name="checklist" id="input-checklist" style="display: none;">{{ checklist|default:'' }}</textarea>
+            </div>
+
+            <div class="card edit-card" draggable="true" style="margin-bottom: 1rem;">
+                <div class="edit-header"><span class="drag-handle">⠿</span><strong>Домашнее задание</strong></div>
+                <div id="editor-homework" class="wysiwyg-editor"></div>
+                <textarea name="homework" id="input-homework" style="display: none;">{{ homework|default:'' }}</textarea>
+            </div>
+
+            <div class="card" style="margin-bottom: 1rem;">
+                <strong style="display: block; margin-bottom: 0.5rem;">Описание изменений</strong>
+                <input type="text" name="change_description" placeholder="Что изменили?" style="width: 100%; padding: 0.6rem; border: 1px solid hsl(var(--border)); border-radius: 6px; font-size: 0.9rem; background: hsl(var(--card)); color: hsl(var(--card-foreground));">
+            </div>
+
+            <div style="display: flex; gap: 0.5rem; margin-top: 1.5rem; flex-wrap: wrap;">
+                <button type="submit" class="btn btn-primary">Сохранить</button>
+                <a href="{% url 'scenario-detail' scenario.pk %}" class="btn btn-outline">Отмена</a>
+            </div>
+        </form>
+    </div>
+</section>
+
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+
+<style>
+    .edit-card { padding: 1rem; }
+    @media (min-width: 640px) { .edit-card { padding: 1.25rem; } }
+    .edit-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; font-size: 0.9rem; }
+    .drag-handle { cursor: grab; color: hsl(var(--muted-foreground)); font-size: 1.1rem; user-select: none; }
+    .wysiwyg-editor { border: 1px solid hsl(var(--border)); border-radius: 6px; background: hsl(var(--card)); }
+    .ql-editor { min-height: 150px; font-size: 14px; line-height: 1.6; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; }
+    @media (max-width: 480px) {
+        .ql-editor { min-height: 120px; font-size: 13px; }
+        .ql-toolbar button { margin: 0 1px; }
+        .ql-toolbar .ql-formats { margin-right: 4px; }
+    }
+    .ql-toolbar { border-radius: 6px 6px 0 0; border-color: hsl(var(--border)); background: hsl(var(--secondary)); }
+    .ql-container { border-radius: 0 0 6px 6px; border-color: hsl(var(--border)); }
+    .ql-toolbar .ql-stroke { stroke: hsl(var(--foreground)); }
+    .ql-toolbar .ql-fill { fill: hsl(var(--foreground)); }
+    html.dark .ql-toolbar { background: hsl(217.2, 32.6%, 17.5%); border-color: hsl(217.2, 32.6%, 25%); }
+    html.dark .ql-container { border-color: hsl(217.2, 32.6%, 25%); }
+    html.dark .ql-editor { color: hsl(210, 40%, 98%); background: hsl(222.2, 84%, 4.9%); }
+    html.dark .ql-toolbar .ql-stroke { stroke: hsl(215, 20.2%, 65.1%); }
+    html.dark .ql-toolbar .ql-fill { fill: hsl(215, 20.2%, 65.1%); }
+    html.dark .ql-picker-label { color: hsl(215, 20.2%, 65.1%); }
+    html.dark .ql-picker-options { background: hsl(217.2, 32.6%, 17.5%); border-color: hsl(217.2, 32.6%, 25%); }
+</style>
+
+<script>
+const cards = document.querySelectorAll('.edit-card');
+let autoScrollInterval;
+cards.forEach(card => {
+    card.addEventListener('dragstart', function(e) { this.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; });
+    card.addEventListener('dragend', function() { this.classList.remove('dragging'); cards.forEach(c => c.classList.remove('drag-over')); clearInterval(autoScrollInterval); });
+    card.addEventListener('dragover', function(e) { e.preventDefault(); this.classList.add('drag-over'); });
+    card.addEventListener('dragleave', function() { this.classList.remove('drag-over'); });
+    card.addEventListener('drop', function(e) { e.preventDefault(); this.classList.remove('drag-over'); const d = document.querySelector('.dragging'); if (d && d !== this) this.parentNode.insertBefore(d, this); });
+});
+document.addEventListener('dragover', function(e) { e.preventDefault(); clearInterval(autoScrollInterval); if (e.clientY < 80) autoScrollInterval = setInterval(() => window.scrollBy(0, -10), 30); else if (e.clientY > window.innerHeight - 80) autoScrollInterval = setInterval(() => window.scrollBy(0, 10), 30); });
+document.addEventListener('dragend', () => clearInterval(autoScrollInterval));
+document.addEventListener('drop', () => clearInterval(autoScrollInterval));
+
+const toolbarOptions = [['bold', 'italic', 'underline'], [{'list': 'ordered'}, {'list': 'bullet'}], [{'header': [1, 2, 3, false]}], ['blockquote'], ['clean']];
+const editorConfigs = [
+    'legend', 'goals', 'stages', 'materials', 'adaptation', 'reflection', 'risks', 'assessment', 'teacher-tips', 'host-script', 'checklist', 'homework'
+];
+const editors = {};
+editorConfigs.forEach(id => {
+    const el = document.getElementById(`editor-${id}`);
+    const input = document.getElementById(`input-${id}`);
+    if (!el || !input) return;
+    const q = new Quill(`#editor-${id}`, { theme: 'snow', modules: { toolbar: toolbarOptions }, placeholder: 'Введите текст...' });
+    const content = input.value;
+    if (content && content !== 'None' && content !== 'null' && content.trim()) q.root.innerHTML = content;
+    editors[id] = q;
+});
+document.getElementById('edit-form').addEventListener('submit', function(e) {
+    editorConfigs.forEach(id => {
+        const q = editors[id];
+        const input = document.getElementById(`input-${id}`);
+        if (q && input) input.value = q.root.innerHTML;
+    });
+    const btn = this.querySelector('button[type="submit"]');
+    btn.textContent = 'Сохранение...';
+    btn.disabled = true;
+});
+</script>
+{% endblock %}

@@ -1,0 +1,374 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section style="padding: 2rem 0;">
+    <div class="container" style="max-width: 800px;">
+
+{% if scenario.title %}
+    <h2 style="font-size: clamp(1.3rem, 3vw, 1.8rem); margin-bottom: 0.75rem;">{{ scenario.title }}</h2>
+{% endif %}
+
+<div class="scenario-meta" style="margin-bottom: 1rem; display: flex; gap: 0.35rem; flex-wrap: wrap;">
+    <span class="badge">{{ scenario.get_direction_display }}</span>
+    <span class="badge">{{ scenario.get_format_type_display }}</span>
+    <span class="badge">{{ scenario.grade }} класс</span>
+    <span class="badge">{{ scenario.duration }} мин.</span>
+</div>
+
+<p style="color: hsl(var(--muted-foreground)); margin-bottom: 1.5rem; font-size: clamp(0.9rem, 2vw, 1.05rem);">
+    <strong>Тема:</strong> {{ scenario.theme }}
+</p>
+
+{% if legend %}
+    <div class="card" style="margin-bottom: 1rem;">
+        <h3 style="font-size: clamp(1rem, 2vw, 1.2rem); margin-bottom: 0.75rem;">Легенда</h3>
+        <div class="scenario-content">{{ legend|safe }}</div>
+    </div>
+{% endif %}
+
+{% if goals %}
+    <div class="card" style="margin-bottom: 1rem;">
+        <h3 style="font-size: clamp(1rem, 2vw, 1.2rem); margin-bottom: 0.75rem;">Цели</h3>
+        <div class="scenario-content">{{ goals|safe }}</div>
+    </div>
+{% endif %}
+
+{% if stages %}
+    <div class="card" style="margin-bottom: 1rem;">
+        <h3 style="font-size: clamp(1rem, 2vw, 1.2rem); margin-bottom: 0.75rem;">Этапы</h3>
+        <div class="scenario-content">{{ stages|safe }}</div>
+    </div>
+{% endif %}
+
+{% if materials %}
+    <div class="card" style="margin-bottom: 1rem;">
+        <h3 style="font-size: clamp(1rem, 2vw, 1.2rem); margin-bottom: 0.75rem;">Материалы и ресурсы</h3>
+        <div class="scenario-content">{{ materials|safe }}</div>
+    </div>
+{% endif %}
+
+{% if adaptation %}
+    <div class="card" style="margin-bottom: 1rem;">
+        <h3 style="font-size: clamp(1rem, 2vw, 1.2rem); margin-bottom: 0.75rem;">Адаптация</h3>
+        <div class="scenario-content">{{ adaptation|safe }}</div>
+    </div>
+{% endif %}
+
+{% if reflection %}
+    <div class="card" style="margin-bottom: 1rem;">
+        <h3 style="font-size: clamp(1rem, 2vw, 1.2rem); margin-bottom: 0.75rem;">Рефлексия</h3>
+        <div class="scenario-content">{{ reflection|safe }}</div>
+    </div>
+{% endif %}
+
+{% if risks %}
+    <div class="card" style="margin-bottom: 1rem;">
+        <h3 style="font-size: clamp(1rem, 2vw, 1.2rem); margin-bottom: 0.75rem;">Риски</h3>
+        <div class="scenario-content">{{ risks|safe }}</div>
+    </div>
+{% endif %}
+
+{% if assessment %}
+    <div class="card" style="margin-bottom: 1rem;">
+        <h3 style="font-size: clamp(1rem, 2vw, 1.2rem); margin-bottom: 0.75rem;">Оценка</h3>
+        <div class="scenario-content">{{ assessment|safe }}</div>
+    </div>
+{% endif %}
+
+{% if teacher_tips %}
+    <div class="card" style="margin-bottom: 1rem;">
+        <h3 style="font-size: clamp(1rem, 2vw, 1.2rem); margin-bottom: 0.75rem;">Советы учителю</h3>
+        <div class="scenario-content">{{ teacher_tips|safe }}</div>
+    </div>
+{% endif %}
+
+{% if host_script %}
+    <div class="card" style="margin-bottom: 1rem;">
+        <h3 style="font-size: clamp(1rem, 2vw, 1.2rem); margin-bottom: 0.75rem;">Сценарий для ведущего</h3>
+        <details open>
+            <summary style="cursor: pointer; font-weight: 600; color: hsl(var(--primary)); padding: 0.5rem 0;">Показать</summary>
+            <div class="scenario-content" style="margin-top: 0.5rem;">{{ host_script|safe }}</div>
+        </details>
+    </div>
+{% endif %}
+
+{% if checklist %}
+    <div class="card" style="margin-bottom: 1rem;">
+        <h3 style="font-size: clamp(1rem, 2vw, 1.2rem); margin-bottom: 0.75rem;">Чек-лист</h3>
+        <div class="scenario-content">{{ checklist|safe }}</div>
+    </div>
+{% endif %}
+
+{% if homework %}
+    <div class="card" style="margin-bottom: 1rem;">
+        <h3 style="font-size: clamp(1rem, 2vw, 1.2rem); margin-bottom: 0.75rem;">Домашнее задание</h3>
+        <div class="scenario-content">{{ homework|safe }}</div>
+    </div>
+{% endif %}
+
+    </div>
+</section>
+
+<div id="qrcode-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; justify-content: center; align-items: center; padding: 1rem;">
+    <div style="background: #fff; border-radius: 12px; padding: 1.5rem; text-align: center; max-width: 360px; width: 100%;">
+        <h3 style="margin-bottom: 1rem;">Сканируйте</h3>
+        <img id="qrcode-image" src="" alt="QR" style="max-width: 250px; width: 100%; margin: 0 auto 1rem;">
+        <button onclick="closeQRCode()" class="btn btn-outline" style="width: 100%;">Закрыть</button>
+    </div>
+</div>
+
+<style>
+    .scenario-content {
+        line-height: 1.7;
+        color: hsl(var(--foreground));
+        font-size: clamp(0.85rem, 2vw, 0.95rem);
+    }
+    .scenario-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; padding-bottom: 0.35rem; border-bottom: 2px solid hsl(var(--border)); }
+    .scenario-content h3 { font-size: 1.05rem; margin: 0.75rem 0 0.35rem; color: hsl(var(--primary)); }
+    .scenario-content p { margin: 0.35rem 0; }
+    .scenario-content strong { font-weight: 600; }
+    .scenario-content ul, .scenario-content ol { margin: 0.35rem 0 0.75rem 1.25rem; }
+    .scenario-content li { margin: 0.2rem 0; }
+    .scenario-content hr { border: none; border-top: 1px dashed hsl(var(--border)); margin: 0.75rem 0; }
+    .scenario-content em { color: hsl(var(--muted-foreground)); }
+
+    .side-actions {
+        position: fixed;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 100;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    .side-action-btn {
+        display: flex;
+        align-items: center;
+        background: hsl(var(--card));
+        border: 1px solid hsl(var(--border));
+        border-right: none;
+        border-radius: 20px 0 0 20px;
+        padding: 0;
+        cursor: pointer;
+        text-decoration: none;
+        color: hsl(var(--foreground));
+        font-size: 0.85rem;
+        font-weight: 500;
+        height: 44px;
+        overflow: hidden;
+        transition: width 0.3s ease, background 0.2s, color 0.2s, box-shadow 0.2s;
+        width: 44px;
+        white-space: nowrap;
+        box-shadow: -2px 2px 6px rgba(0,0,0,0.04);
+        margin-left: auto;
+    }
+    .side-action-btn:hover {
+        width: 190px;
+        background: hsl(var(--primary));
+        color: #fff;
+        border-color: hsl(var(--primary));
+        box-shadow: -4px 4px 16px rgba(0,0,0,0.12);
+    }
+    .side-action-btn .btn-icon {
+        min-width: 44px;
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+    .side-action-btn .btn-text {
+        opacity: 0;
+        transition: opacity 0.2s ease 0.1s;
+        white-space: nowrap;
+        padding-right: 16px;
+    }
+    .side-action-btn:hover .btn-text {
+        opacity: 1;
+    }
+    .side-action-btn.primary {
+        background: hsl(var(--primary));
+        color: #fff;
+        border-color: hsl(var(--primary));
+    }
+    .side-action-btn.primary:hover {
+        background: hsl(221.2, 83.2%, 45%);
+    }
+    
+    @media (max-width: 640px) {
+        .side-actions { gap: 4px; }
+        .side-action-btn { height: 40px; width: 40px; border-radius: 16px 0 0 16px; }
+        .side-action-btn:hover { width: 160px; }
+        .side-action-btn .btn-icon { min-width: 40px; width: 40px; height: 40px; font-size: 1.1rem; }
+        .side-action-btn .btn-text { font-size: 0.8rem; }
+    }
+
+    .toast-notification {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%) translateY(20px);
+        background: hsl(var(--card));
+        color: hsl(var(--card-foreground));
+        padding: 12px 24px;
+        border-radius: 12px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        z-index: 9999;
+        opacity: 0;
+        transition: all 0.3s ease;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        border: 1px solid hsl(var(--border));
+    }
+    .toast-notification.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+</style>
+
+<div class="side-actions">
+    <a href="{% url 'scenario-edit' scenario.pk %}" class="side-action-btn primary">
+        <span class="btn-icon">✏️</span>
+        <span class="btn-text">Редактировать</span>
+    </a>
+    <a href="{% url 'scenario-export-pdf' scenario.pk %}" class="side-action-btn">
+        <span class="btn-icon">📄</span>
+        <span class="btn-text">Скачать PDF</span>
+    </a>
+    <a href="{% url 'scenario-export-docx' scenario.pk %}" class="side-action-btn">
+        <span class="btn-icon">📝</span>
+        <span class="btn-text">Скачать DOCX</span>
+    </a>
+    <button onclick="copyFullScenario()" class="side-action-btn">
+        <span class="btn-icon">📋</span>
+        <span class="btn-text">Копировать</span>
+    </button>
+    {% if scenario.share_key %}
+        <button onclick="unshareScenario({{ scenario.pk }})" class="side-action-btn">
+            <span class="btn-icon">🔗</span>
+            <span class="btn-text">Отозвать доступ</span>
+        </button>
+    {% else %}
+        <button onclick="shareScenario({{ scenario.pk }})" class="side-action-btn">
+            <span class="btn-icon">📤</span>
+            <span class="btn-text">Поделиться</span>
+        </button>
+    {% endif %}
+    <button onclick="openQRCode({{ scenario.pk }})" class="side-action-btn">
+        <span class="btn-icon">📱</span>
+        <span class="btn-text">На планшет</span>
+    </button>
+    <button onclick="toggleFullscreen()" class="side-action-btn" id="fullscreen-btn">
+        <span class="btn-icon">📺</span>
+        <span class="btn-text">Полный экран</span>
+    </button>
+    <a href="{% url 'scenario-versions' scenario.pk %}" class="side-action-btn">
+        <span class="btn-icon">📜</span>
+        <span class="btn-text">История версий</span>
+    </a>
+    <a href="{% url 'scenario-list' %}" class="side-action-btn">
+        <span class="btn-icon">←</span>
+        <span class="btn-text">К списку</span>
+    </a>
+</div>
+
+<script>
+function showToast(message) {
+    let toast = document.querySelector('.toast-notification');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.className = 'toast-notification';
+        document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    toast.classList.add('show');
+    clearTimeout(toast._timeout);
+    toast._timeout = setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+}
+
+function copyFullScenario() {
+    const container = document.querySelector('section .container');
+    if (!container) return;
+    const text = container.innerText.trim();
+    navigator.clipboard.writeText(text).then(() => {
+        showToast('Сценарий скопирован');
+    }).catch(() => {
+        showToast('Не удалось скопировать');
+    });
+}
+
+async function shareScenario(pk) {
+    try {
+        const response = await fetch(`/scenarios/${pk}/share/`, { 
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCSRFToken() }
+        });
+        const data = await response.json();
+        if (data.status === 'success') {
+            await navigator.clipboard.writeText(data.url);
+            showToast('Ссылка скопирована');
+            setTimeout(() => location.reload(), 500);
+        }
+    } catch (e) {
+        showToast('Ошибка');
+    }
+}
+
+async function unshareScenario(pk) {
+    try {
+        const response = await fetch(`/scenarios/${pk}/unshare/`, { 
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCSRFToken() }
+        });
+        const data = await response.json();
+        if (data.status === 'success') {
+            showToast('Доступ закрыт');
+            setTimeout(() => location.reload(), 500);
+        }
+    } catch (e) {
+        showToast('Ошибка');
+    }
+}
+
+function openQRCode(pk) {
+    fetch(`/scenarios/${pk}/qrcode/`).then(r => r.blob()).then(blob => {
+        document.getElementById('qrcode-image').src = URL.createObjectURL(blob);
+        document.getElementById('qrcode-modal').style.display = 'flex';
+        showToast('QR-код готов');
+    });
+}
+
+function closeQRCode() { 
+    document.getElementById('qrcode-modal').style.display = 'none'; 
+}
+
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+        document.querySelector('.navbar').style.display = 'none';
+        showToast('Полноэкранный режим');
+    } else {
+        document.exitFullscreen();
+        document.querySelector('.navbar').style.display = '';
+    }
+}
+
+document.addEventListener('fullscreenchange', function() {
+    if (!document.fullscreenElement) {
+        document.querySelector('.navbar').style.display = '';
+    }
+});
+
+function getCSRFToken() {
+    const c = document.cookie.split('; ').find(r => r.startsWith('csrftoken='));
+    return c ? c.split('=')[1] : '';
+}
+
+document.getElementById('qrcode-modal').addEventListener('click', function(e) { if (e.target === this) closeQRCode(); });
+</script>
+{% endblock %}

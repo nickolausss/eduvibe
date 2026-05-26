@@ -1,0 +1,434 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section style="padding: 3rem 0;">
+    <div class="container" style="max-width: 720px; margin: 0 auto;">
+        <h2 style="text-align: center; margin-bottom: 0.5rem;">Создание нового сценария</h2>
+        <p style="text-align: center; color: hsl(var(--muted-foreground)); margin-bottom: 1.5rem;">Заполните форму — ИИ создаст методически точный сценарий для вашего класса</p>
+
+        <div style="display: flex; justify-content: center; align-items: center; gap: 0.5rem; margin-bottom: 2rem; flex-wrap: nowrap; overflow: hidden;">
+            <div class="step-indicator active" id="step-indicator-1">
+                <span class="step-number">1</span>
+                <span class="step-label">Основное</span>
+            </div>
+            <span class="step-arrow">→</span>
+            <div class="step-indicator" id="step-indicator-2">
+                <span class="step-number">2</span>
+                <span class="step-label">Цели и навыки</span>
+            </div>
+            <span class="step-arrow">→</span>
+            <div class="step-indicator" id="step-indicator-3">
+                <span class="step-number">3</span>
+                <span class="step-label">Игровая модель</span>
+            </div>
+            <span class="step-arrow">→</span>
+            <div class="step-indicator" id="step-indicator-4">
+                <span class="step-number">4</span>
+                <span class="step-label">Контекст</span>
+            </div>
+        </div>
+
+        <form method="post" id="scenario-form" style="margin: 0 auto;" novalidate>
+            {% csrf_token %}
+
+            <div class="form-step active" id="step-1">
+                <div class="card" style="margin-bottom: 1.5rem;">
+                    <h3 style="margin-bottom: 1rem;">Основные параметры</h3>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            Направление воспитания
+                            <span class="tooltip-trigger" data-tooltip="Выберите одно из 8 направлений воспитания согласно ФГОС">?</span>
+                        </label>
+                        <select name="direction" data-required="true" style="width: 100%; padding: 0.75rem; border: 1px solid hsl(var(--border)); border-radius: 6px; font-size: 1rem; background: hsl(var(--card)); color: hsl(var(--foreground));">
+                            <option value="">Выберите направление</option>
+                            <option value="civil">Гражданское</option>
+                            <option value="patriotic">Патриотическое</option>
+                            <option value="spiritual">Духовно-нравственное</option>
+                            <option value="aesthetic">Эстетическое</option>
+                            <option value="physical">Физическое</option>
+                            <option value="labor">Трудовое</option>
+                            <option value="ecological">Экологическое</option>
+                            <option value="scientific">Ценности научного познания</option>
+                        </select>
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            Класс (1-11)
+                            <span class="tooltip-trigger" data-tooltip="Сценарий будет адаптирован под возраст">?</span>
+                        </label>
+                        <input type="number" name="grade" min="1" max="11" data-required="true"
+                               style="width: 100%; padding: 0.75rem; border: 1px solid hsl(var(--border)); border-radius: 6px; font-size: 1rem; background: hsl(var(--card)); color: hsl(var(--foreground));"
+                               placeholder="Выберите класс от 1 до 11">
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            Тема занятия
+                            <span class="tooltip-trigger" data-tooltip='Например: «День народного единства», «Безопасный интернет»'>?</span>
+                        </label>
+                        <input type="text" name="theme" data-required="true"
+                               style="width: 100%; padding: 0.75rem; border: 1px solid hsl(var(--border)); border-radius: 6px; font-size: 1rem; background: hsl(var(--card)); color: hsl(var(--foreground));"
+                               placeholder="Введите тему занятия">
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            Продолжительность (минут)
+                            <span class="tooltip-trigger" data-tooltip="Согласно СанПиН, не более 45 минут (40 минут для 1 класса)">?</span>
+                        </label>
+                        <input type="number" name="duration" min="10" max="45" value="40" data-required="true"
+                               style="width: 100%; padding: 0.75rem; border: 1px solid hsl(var(--border)); border-radius: 6px; font-size: 1rem; background: hsl(var(--card)); color: hsl(var(--foreground));"
+                               placeholder="От 10 до 45 минут">
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            Формат занятия
+                            <span class="tooltip-trigger" data-tooltip="Выберите один из 8 форматов внеурочной деятельности">?</span>
+                        </label>
+                        <select name="format_type" data-required="true" style="width: 100%; padding: 0.75rem; border: 1px solid hsl(var(--border)); border-radius: 6px; font-size: 1rem; background: hsl(var(--card)); color: hsl(var(--foreground));">
+                            <option value="">Выберите формат</option>
+                            <option value="class_hour">Классный час</option>
+                            <option value="quiz">Квиз / Викторина</option>
+                            <option value="discussion">Беседа с элементами игры</option>
+                            <option value="game">Игра</option>
+                            <option value="workshop">Мастерская</option>
+                            <option value="movie_club">Киноклуб с обсуждением</option>
+                            <option value="debate">Дебаты</option>
+                            <option value="project">Проектная сессия</option>
+                        </select>
+                    </div>
+
+                    <div style="margin-bottom: 0;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            Название (необязательно)
+                            <span class="tooltip-trigger" data-tooltip="Оставьте пустым — ИИ придумает яркое название сам">?</span>
+                        </label>
+                        <input type="text" name="title"
+                               style="width: 100%; padding: 0.75rem; border: 1px solid hsl(var(--border)); border-radius: 6px; font-size: 1rem; background: hsl(var(--card)); color: hsl(var(--foreground));"
+                               placeholder="Оставьте пустым для автогенерации">
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: flex-end;">
+                    <button type="button" class="btn btn-primary" onclick="nextStep(2)">Далее →</button>
+                </div>
+            </div>
+
+            <div class="form-step" id="step-2" style="display: none;">
+                <div class="card" style="margin-bottom: 1.5rem;">
+                    <h3 style="margin-bottom: 1rem;">Целеполагание</h3>
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            Воспитательная цель
+                            <span class="tooltip-trigger" data-tooltip='Например: «Формирование чувства патриотизма»'>?</span>
+                        </label>
+                        <input type="text" name="goal" style="width: 100%; padding: 0.75rem; border: 1px solid hsl(var(--border)); border-radius: 6px; font-size: 1rem; background: hsl(var(--card)); color: hsl(var(--foreground));" placeholder="Какое качество личности формируем?">
+                    </div>
+                    <div style="margin-bottom: 0;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            Предметная область (интеграция)
+                            <span class="tooltip-trigger" data-tooltip='Например: «История + Литература»'>?</span>
+                        </label>
+                        <input type="text" name="subjects" style="width: 100%; padding: 0.75rem; border: 1px solid hsl(var(--border)); border-radius: 6px; font-size: 1rem; background: hsl(var(--card)); color: hsl(var(--foreground));" placeholder="Какие предметы интегрирует занятие?">
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom: 1.5rem;">
+                    <h3 style="margin-bottom: 1rem;">Развиваемые навыки (Soft Skills)</h3>
+                    <div class="chip-group">
+                        <label class="chip"><input type="checkbox" name="soft_skills" value="communication" style="display: none;"><span>Коммуникация</span></label>
+                        <label class="chip"><input type="checkbox" name="soft_skills" value="critical_thinking" style="display: none;"><span>Критическое мышление</span></label>
+                        <label class="chip"><input type="checkbox" name="soft_skills" value="creativity" style="display: none;"><span>Креативность</span></label>
+                        <label class="chip"><input type="checkbox" name="soft_skills" value="collaboration" style="display: none;"><span>Коллаборация</span></label>
+                        <label class="chip"><input type="checkbox" name="soft_skills" value="leadership" style="display: none;"><span>Лидерство</span></label>
+                        <label class="chip"><input type="checkbox" name="soft_skills" value="emotional_intelligence" style="display: none;"><span>Эмоциональный интеллект</span></label>
+                        <label class="chip"><input type="checkbox" name="soft_skills" value="public_speaking" style="display: none;"><span>Публичные выступления</span></label>
+                        <label class="chip"><input type="checkbox" name="soft_skills" value="time_management" style="display: none;"><span>Тайм-менеджмент</span></label>
+                        <label class="chip"><input type="checkbox" name="soft_skills" value="problem_solving" style="display: none;"><span>Решение проблем</span></label>
+                        <label class="chip"><input type="checkbox" name="soft_skills" value="media_literacy" style="display: none;"><span>Медиаграмотность</span></label>
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <button type="button" class="btn btn-outline" onclick="prevStep(1)">← Назад</button>
+                    <button type="button" class="btn btn-primary" onclick="nextStep(3)">Далее →</button>
+                </div>
+            </div>
+
+            <div class="form-step" id="step-3" style="display: none;">
+                <div class="card" style="margin-bottom: 1.5rem;">
+                    <h3 style="margin-bottom: 1rem;">Игровая модель</h3>
+                    <div style="margin-bottom: 1rem;">
+                        <label class="chip"><input type="checkbox" name="need_legend" checked style="display: none;"><span>Добавить легенду (крючок вовлечения)</span></label>
+                    </div>
+                    <label style="margin-bottom: 0.5rem;">Игровые механики</label>
+                    <div class="chip-group">
+                        <label class="chip"><input type="checkbox" name="mechanics" value="gamification" style="display: none;"><span>Геймификация</span></label>
+                        <label class="chip"><input type="checkbox" name="mechanics" value="station_rotation" style="display: none;"><span>Смена рабочих зон</span></label>
+                        <label class="chip"><input type="checkbox" name="mechanics" value="challenge" style="display: none;"><span>Челленджи</span></label>
+                        <label class="chip"><input type="checkbox" name="mechanics" value="quest" style="display: none;"><span>Квест</span></label>
+                        <label class="chip"><input type="checkbox" name="mechanics" value="role_play" style="display: none;"><span>Ролевая игра</span></label>
+                        <label class="chip"><input type="checkbox" name="mechanics" value="project_work" style="display: none;"><span>Проектная работа</span></label>
+                        <label class="chip"><input type="checkbox" name="mechanics" value="case_method" style="display: none;"><span>Кейс-метод</span></label>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom: 1.5rem;">
+                    <h3 style="margin-bottom: 1rem;">Ресурсы</h3>
+                    <label style="margin-bottom: 0.5rem;">Оборудование</label>
+                    <div class="chip-group" style="margin-bottom: 1rem;">
+                        <label class="chip"><input type="checkbox" name="equipment" value="projector" style="display: none;"><span>Проектор</span></label>
+                        <label class="chip"><input type="checkbox" name="equipment" value="speakers" style="display: none;"><span>Колонки</span></label>
+                        <label class="chip"><input type="checkbox" name="equipment" value="computers" style="display: none;"><span>Компьютеры</span></label>
+                        <label class="chip"><input type="checkbox" name="equipment" value="tablets" style="display: none;"><span>Планшеты</span></label>
+                        <label class="chip"><input type="checkbox" name="equipment" value="interactive_board" style="display: none;"><span>Интерактивная доска</span></label>
+                        <label class="chip"><input type="checkbox" name="equipment" value="none" style="display: none;"><span>Ничего</span></label>
+                    </div>
+                    <label style="margin-bottom: 0.5rem;">Оснащение кабинета</label>
+                    <select name="classroom_level" style="width: 100%; padding: 0.75rem; border: 1px solid hsl(var(--border)); border-radius: 6px; font-size: 1rem; background: hsl(var(--card)); color: hsl(var(--foreground));">
+                        <option value="minimal">Минимальное (доска и мел)</option>
+                        <option value="standard" selected>Стандартное (проектор + экран)</option>
+                        <option value="advanced">Продвинутое (интерактивная доска)</option>
+                        <option value="full">Полное (компьютерный класс)</option>
+                    </select>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <button type="button" class="btn btn-outline" onclick="prevStep(2)">← Назад</button>
+                    <button type="button" class="btn btn-primary" onclick="nextStep(4)">Далее →</button>
+                </div>
+            </div>
+
+            <div class="form-step" id="step-4" style="display: none;">
+                <div class="card" style="margin-bottom: 1.5rem;">
+                    <h3 style="margin-bottom: 1rem;">Контекст</h3>
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">Актуальность <span class="tooltip-trigger" data-tooltip="Почему это важно именно сейчас?">?</span></label>
+                        <textarea name="relevance" rows="2" style="width: 100%; padding: 0.75rem; border: 1px solid hsl(var(--border)); border-radius: 6px; font-size: 1rem; font-family: inherit; background: hsl(var(--card)); color: hsl(var(--foreground)); resize: vertical;" placeholder="Почему это важно именно сейчас?"></textarea>
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">Решаемая проблема <span class="tooltip-trigger" data-tooltip="Какую проблему решает это занятие?">?</span></label>
+                        <textarea name="problem" rows="2" style="width: 100%; padding: 0.75rem; border: 1px solid hsl(var(--border)); border-radius: 6px; font-size: 1rem; font-family: inherit; background: hsl(var(--card)); color: hsl(var(--foreground)); resize: vertical;" placeholder="Какую проблему решает занятие?"></textarea>
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">Особенности класса <span class="tooltip-trigger" data-tooltip="Например: слабослышащий ученик, низкая дисциплина">?</span></label>
+                        <textarea name="class_features" rows="2" style="width: 100%; padding: 0.75rem; border: 1px solid hsl(var(--border)); border-radius: 6px; font-size: 1rem; font-family: inherit; background: hsl(var(--card)); color: hsl(var(--foreground)); resize: vertical;" placeholder="Есть ли дети с ОВЗ, низкая мотивация, конфликты?"></textarea>
+                    </div>
+                    <div style="margin-bottom: 0;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">Дополнительные пожелания <span class="tooltip-trigger" data-tooltip="Любые пожелания к сценарию">?</span></label>
+                        <textarea name="extra_notes" rows="2" style="width: 100%; padding: 0.75rem; border: 1px solid hsl(var(--border)); border-radius: 6px; font-size: 1rem; font-family: inherit; background: hsl(var(--card)); color: hsl(var(--foreground)); resize: vertical;" placeholder="Что ещё важно учесть?"></textarea>
+                    </div>
+                </div>
+
+                <div class="card" style="background: hsl(142, 76%, 95%); border: 1px solid hsl(142, 76%, 80%); margin-bottom: 1.5rem;">
+                    <p style="font-size: 0.85rem; color: hsl(142, 76%, 25%); margin: 0; text-align: center;">
+                        Сценарий будет соответствовать ФГОС, профстандарту «Педагог» и СанПиН. Содержит 14 разделов.
+                    </p>
+                </div>
+
+                <div style="text-align: center; margin-bottom: 1rem;">
+                    {% if limit_exceeded %}
+                        <p style="color: #ef4444; font-weight: 600;">
+                            Дневной лимит исчерпан ({{ requests_used }}/{{ requests_max }}). Попробуйте завтра.
+                        </p>
+                    {% else %}
+                        <p style="color: hsl(var(--muted-foreground)); font-size: 0.9rem;">
+                            Осталось запросов сегодня: 
+                            <strong style="color: {% if requests_remaining <= 5 %}#ef4444{% else %}hsl(var(--primary)){% endif %};">
+                                {{ requests_remaining }}
+                            </strong> 
+                            из {{ requests_max }}
+                        </p>
+                    {% endif %}
+                </div>
+
+                <div style="display: flex; justify-content: space-between;">
+                    <button type="button" class="btn btn-outline" onclick="prevStep(3)">← Назад</button>
+                    <button type="submit" class="btn btn-primary btn-lg">Сгенерировать сценарий</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</section>
+
+<style>
+    .step-indicator {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        background: hsl(var(--secondary));
+        color: hsl(var(--muted-foreground));
+        font-size: 0.9rem;
+        white-space: nowrap;
+    }
+    .step-indicator.active {
+        background: hsl(221.2, 83.2%, 53.3%);
+        color: #fff;
+    }
+    .step-number {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.8rem;
+    }
+    .step-indicator.active .step-number {
+        background: rgba(255,255,255,0.5);
+    }
+    .step-arrow {
+        color: hsl(var(--muted-foreground));
+        font-weight: 700;
+        font-size: 1rem;
+    }
+    .tooltip-trigger {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: hsl(var(--muted-foreground) / 0.2);
+        color: hsl(var(--muted-foreground));
+        font-size: 0.75rem;
+        cursor: help;
+        position: relative;
+    }
+    .tooltip-trigger:hover::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: hsl(var(--foreground));
+        color: hsl(var(--background));
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        white-space: nowrap;
+        z-index: 100;
+        pointer-events: none;
+    }
+    .chip-group { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .chip { display: inline-block; cursor: pointer; }
+    .chip span {
+        display: block;
+        padding: 0.5rem 1rem;
+        border: 1px solid hsl(var(--border));
+        border-radius: 8px;
+        font-size: 0.9rem;
+        background: hsl(var(--card));
+        color: hsl(var(--foreground));
+        transition: all 0.2s;
+        user-select: none;
+    }
+    .chip input:checked + span {
+        background: hsl(221.2, 83.2%, 53.3%);
+        color: #fff;
+        border-color: hsl(221.2, 83.2%, 53.3%);
+    }
+    .chip span:hover { border-color: hsl(var(--primary)); }
+    
+    @media (max-width: 640px) {
+        .step-indicator { font-size: 0.7rem; padding: 0.35rem 0.5rem; }
+        .step-number { width: 20px; height: 20px; font-size: 0.65rem; }
+        .step-arrow { font-size: 0.8rem; }
+        .chip span { padding: 0.4rem 0.6rem; font-size: 0.8rem; }
+        .chip-group { gap: 0.35rem; }
+        textarea, input, select { font-size: 0.9rem; padding: 0.5rem 0.6rem; }
+        .card { padding: 1rem; }
+        label { font-size: 0.85rem; margin-top: 0.75rem; }
+        .tooltip-trigger { width: 15px; height: 15px; font-size: 0.65rem; }
+    }
+</style>
+
+<script>
+    let currentStep = 1;
+
+    function showStep(step) {
+        document.querySelectorAll('.form-step').forEach(s => s.style.display = 'none');
+        document.getElementById('step-' + step).style.display = 'block';
+        
+        document.querySelectorAll('.step-indicator').forEach((ind, i) => {
+            ind.classList.toggle('active', i + 1 === step);
+        });
+        
+        currentStep = step;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function nextStep(step) {
+        const currentFields = document.getElementById('step-' + currentStep).querySelectorAll('[data-required]');
+        let hasError = false;
+        
+        currentFields.forEach(field => {
+            let isEmpty = false;
+            if (field.tagName === 'SELECT') {
+                isEmpty = field.value === '';
+            } else {
+                isEmpty = field.value.trim() === '';
+            }
+            if (isEmpty) {
+                field.style.borderColor = 'red';
+                field.style.boxShadow = '0 0 0 2px rgba(255,0,0,0.3)';
+                hasError = true;
+            }
+        });
+        
+        if (hasError) return;
+        showStep(step);
+    }
+
+    function prevStep(step) {
+        showStep(step);
+    }
+
+    document.querySelectorAll('[data-required]').forEach(field => {
+        field.addEventListener('input', function() {
+            this.style.borderColor = '';
+            this.style.boxShadow = '';
+        });
+        field.addEventListener('change', function() {
+            this.style.borderColor = '';
+            this.style.boxShadow = '';
+        });
+    });
+
+    document.getElementById('scenario-form').addEventListener('submit', function(e) {
+        let hasError = false;
+        const fields = this.querySelectorAll('[data-required]');
+        fields.forEach(field => {
+            let isEmpty = false;
+            if (field.tagName === 'SELECT') {
+                isEmpty = field.value === '';
+            } else {
+                isEmpty = field.value.trim() === '';
+            }
+            if (isEmpty) {
+                field.style.borderColor = 'red';
+                field.style.boxShadow = '0 0 0 2px rgba(255,0,0,0.3)';
+                hasError = true;
+            }
+        });
+        if (hasError) {
+            e.preventDefault();
+            for (let s = 1; s <= 4; s++) {
+                const stepFields = document.getElementById('step-' + s).querySelectorAll('[data-required]');
+                let stepHasError = false;
+                stepFields.forEach(f => {
+                    let isEmpty = false;
+                    if (f.tagName === 'SELECT') isEmpty = f.value === '';
+                    else isEmpty = f.value.trim() === '';
+                    if (isEmpty) stepHasError = true;
+                });
+                if (stepHasError) { showStep(s); break; }
+            }
+        }
+    });
+</script>
+{% endblock %}

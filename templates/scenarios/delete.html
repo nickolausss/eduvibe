@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h2>Удалить сценарий?</h2>
+    <p>Вы уверены, что хотите удалить "{{ scenario.title|default:scenario.theme }}"?</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit">Удалить</button>
+        <a href="{% url 'scenario-list' %}">Отмена</a>
+    </form>
+{% endblock %}

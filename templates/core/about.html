@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section style="padding: 3rem 0;">
+    <div class="container" style="max-width: 800px;">
+        <h2>О сервисе EduVibe</h2>
+        <p style="color: hsl(var(--muted-foreground)); margin-bottom: 2rem;">ИИ-генератор сценариев внеурочных занятий для классных руководителей и педагогов-организаторов</p>
+
+        <details class="about-spoiler" open>
+            <summary>Проблема</summary>
+            <div class="spoiler-content">
+                <p>Классные руководители тратят <strong>2-3 часа</strong> на подготовку одного внеурочного занятия. При нагрузке 2-3 занятия в неделю это до <strong>9 часов</strong> только на подготовку. Это ведёт к профессиональному выгоранию и снижению качества сценариев.</p>
+                <p style="margin-top: 0.75rem;">По данным исследований (Шилкова М.С., Чащина Н.А., 2025), использование искусственного интеллекта <strong>«однозначно может помочь на стадии подготовки к урокам, освободив время учителя»</strong> и является <strong>«действенной мерой профилактики профессионального выгорания»</strong>.</p>
+            </div>
+        </details>
+
+        <details class="about-spoiler" open>
+            <summary>Решение</summary>
+            <div class="spoiler-content">
+                <p>EduVibe использует искусственный интеллект (YandexGPT 5.1 Pro) для генерации полного сценария за <strong>40-120 секунд</strong>. Учитель заполняет короткую форму и получает готовый план с этапами, репликами, вопросами, ответами детей и списком материалов.</p>
+            </div>
+        </details>
+
+        <details class="about-spoiler">
+            <summary>Как работает</summary>
+            <div class="spoiler-content">
+                <ol>
+                    <li><strong>Заполните форму:</strong> выберите направление воспитания, класс, тему, формат и длительность</li>
+                    <li><strong>Нажмите «Сгенерировать»:</strong> сервис отправляет 6 запросов к YandexGPT 5.1 Pro (5 из них параллельно для скорости)</li>
+                    <li><strong>Получите сценарий:</strong> через 40-120 секунд готовый план с 14 разделами</li>
+                    <li><strong>Распечатайте или экспортируйте:</strong> PDF, DOCX, персональная ссылка, QR-код для планшета</li>
+                </ol>
+            </div>
+        </details>
+
+        <details class="about-spoiler">
+            <summary>Направления воспитания (ФГОС)</summary>
+            <div class="spoiler-content">
+                <p>Сервис поддерживает все 8 направлений воспитания, установленных федеральными государственными образовательными стандартами:</p>
+                <ul>
+                    <li>Гражданское</li>
+                    <li>Патриотическое</li>
+                    <li>Духовно-нравственное</li>
+                    <li>Эстетическое</li>
+                    <li>Физическое</li>
+                    <li>Трудовое</li>
+                    <li>Экологическое</li>
+                    <li>Ценности научного познания</li>
+                </ul>
+            </div>
+        </details>
+
+        <details class="about-spoiler">
+            <summary>Форматы занятий</summary>
+            <div class="spoiler-content">
+                <p>8 форматов внеурочной деятельности, отличных от урочных (согласно ФГОС):</p>
+                <ul>
+                    <li>Классный час</li>
+                    <li>Квиз / Викторина</li>
+                    <li>Беседа с элементами игры</li>
+                    <li>Игра</li>
+                    <li>Мастерская</li>
+                    <li>Киноклуб с обсуждением</li>
+                    <li>Дебаты</li>
+                    <li>Проектная сессия</li>
+                </ul>
+            </div>
+        </details>
+
+        <details class="about-spoiler">
+            <summary>Что содержит сгенерированный сценарий (14 разделов)</summary>
+            <div class="spoiler-content">
+                <ol>
+                    <li><strong>Название и легенда</strong> — сюжетная линия, погружающая детей в ситуацию</li>
+                    <li><strong>Цели</strong> — воспитательная, практическая, Soft Skills (по ФГОС)</li>
+                    <li><strong>5-6 этапов</strong> с точным хронометражем</li>
+                    <li><strong>Действия учителя</strong> — готовая прямая речь для каждого этапа</li>
+                    <li><strong>Действия учеников</strong> — конкретные активности</li>
+                    <li><strong>Вопросы и предполагаемые ответы</strong> — 2-3 варианта на каждый вопрос</li>
+                    <li><strong>Материалы и ресурсы</strong> — оборудование, канцелярия, цифровые ресурсы, реквизит</li>
+                    <li><strong>Рефлексия</strong> — метод, вопросы, скрипт для учителя</li>
+                    <li><strong>Адаптация</strong> — для 5-6 классов, 10-11 классов и детей с ОВЗ</li>
+                    <li><strong>Риски</strong> — технические, методические, динамические, конфликтные с запасными вариантами</li>
+                    <li><strong>Критерии оценки</strong> — количественные и качественные</li>
+                    <li><strong>Советы учителю</strong> — 5 практических рекомендаций</li>
+                    <li><strong>Сценарий для ведущего</strong> — полный текст от первого лица</li>
+                    <li><strong>Чек-лист подготовки</strong> — за неделю, день, час, 5 минут до начала</li>
+                </ol>
+            </div>
+        </details>
+
+        <details class="about-spoiler">
+            <summary>Нормативная база</summary>
+            <div class="spoiler-content">
+                <p>Сервис разработан в соответствии с:</p>
+                <ul>
+                    <li><strong>Федеральным законом № 273-ФЗ</strong> «Об образовании в Российской Федерации»</li>
+                    <li><strong>ФГОС</strong> начального, основного и среднего общего образования</li>
+                    <li><strong>Профессиональным стандартом «Педагог»</strong> (приказ Минтруда № 544н)</li>
+                    <li><strong>Письмом Минпросвещения № ТВ-1290/03</strong> от 05.07.2022 о внеурочной деятельности</li>
+                    <li><strong>Примерной рабочей программой воспитания</strong> (2022)</li>
+                    <li><strong>СанПиН 2.4.3648-20</strong> «Санитарно-эпидемиологические требования»</li>
+                </ul>
+                <p style="margin-top: 0.75rem;">Это обеспечивает методическую корректность сценариев, соответствие возрастным особенностям, соблюдение санитарных норм и учёт требований к воспитательной работе в российских школах.</p>
+            </div>
+        </details>
+
+        <details class="about-spoiler">
+            <summary>Автоматизация трудовых функций педагога</summary>
+            <div class="spoiler-content">
+                <p>Сервис автоматизирует трудовые функции, закреплённые в профессиональном стандарте «Педагог»:</p>
+                <ul>
+                    <li><strong>A/02.6 — Воспитательная деятельность:</strong> реализация интерактивных форм воспитательной работы, постановка воспитательных целей, проектирование ситуаций, развивающих эмоционально-ценностную сферу ребёнка</li>
+                    <li><strong>A/03.6 — Развивающая деятельность:</strong> развитие познавательной активности, формирование гражданской позиции, адресная работа с различными категориями детей</li>
+                </ul>
+            </div>
+        </details>
+
+        <details class="about-spoiler">
+            <summary>Безопасность и конфиденциальность</summary>
+            <div class="spoiler-content">
+                <ul>
+                    <li><strong>Изоляция данных:</strong> каждый учитель видит только свои сценарии (идентификация по session_key)</li>
+                    <li><strong>Персональные ссылки:</strong> доступ к сценарию только по уникальному ключу (share_key), можно отозвать</li>
+                    <li><strong>Лимит запросов:</strong> 20 генераций в день — защита от перегрузки API</li>
+                    <li><strong>Логирование:</strong> все запросы к ИИ фиксируются в таблице LLMRequestLog</li>
+                </ul>
+            </div>
+        </details>
+
+        <details class="about-spoiler">
+            <summary>Сравнение с аналогами</summary>
+            <div class="spoiler-content">
+                <table>
+                    <thead><tr><th>Критерий</th><th>EduVibe</th><th>ChatGPT</th><th>Готовые шаблоны</th></tr></thead>
+                    <tbody>
+                        <tr><td>Специализация на ФГОС</td><td>Да</td><td>Нет</td><td>Да</td></tr>
+                        <tr><td>Готовая прямая речь</td><td>Да</td><td>Частично</td><td>Нет</td></tr>
+                        <tr><td>Адаптация под возраст</td><td>Автоматически</td><td>По запросу</td><td>Нет</td></tr>
+                        <tr><td>14 разделов</td><td>Да</td><td>По запросу</td><td>Частично</td></tr>
+                        <tr><td>Экспорт PDF/DOCX</td><td>Да</td><td>Нет</td><td>Нет</td></tr>
+                        <tr><td>Календарное планирование</td><td>Да</td><td>Нет</td><td>Нет</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </details>
+
+        <details class="about-spoiler">
+            <summary>Используемые технологии</summary>
+            <div class="spoiler-content">
+                <ul>
+                    <li><strong>Backend:</strong> Django 4.2 (Python)</li>
+                    <li><strong>ИИ:</strong> YandexGPT 5.1 Pro (6 запросов, 5 параллельно)</li>
+                    <li><strong>База данных:</strong> SQLite</li>
+                    <li><strong>Frontend:</strong> HTML5, CSS3, Vanilla JavaScript</li>
+                    <li><strong>Экспорт:</strong> ReportLab (PDF), python-docx (DOCX), qrcode (QR-коды)</li>
+                </ul>
+            </div>
+        </details>
+    </div>
+</section>
+
+<style>
+    .about-spoiler {
+        background: hsl(var(--card));
+        border: 1px solid hsl(var(--border));
+        border-radius: 12px;
+        padding: 0;
+        margin: 0.75rem 0;
+        overflow: hidden;
+    }
+    .about-spoiler summary {
+        padding: 1rem 1.5rem;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 1rem;
+        color: hsl(var(--foreground));
+        background: hsl(var(--secondary));
+        list-style: none;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .about-spoiler summary::-webkit-details-marker { display: none; }
+    .about-spoiler summary::before {
+        content: '▶';
+        font-size: 0.7rem;
+        transition: transform 0.2s;
+    }
+    .about-spoiler[open] summary::before {
+        transform: rotate(90deg);
+    }
+    .spoiler-content {
+        padding: 1rem 1.5rem 1.5rem;
+    }
+</style>
+{% endblock %}

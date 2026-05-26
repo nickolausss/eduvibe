@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section style="padding: 3rem 0;">
+    <div class="container" style="max-width: 900px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h2 style="margin: 0;">📋 Мои сценарии</h2>
+            <span class="badge">{{ total_count }} сценариев · {{ themes_count }} тем в календаре</span>
+        </div>
+        <p style="color: hsl(var(--muted-foreground)); margin-bottom: 2rem; font-size: 0.85rem;">
+            Персональная ссылка для просмотра. Открывайте на любом устройстве.
+        </p>
+
+        {% if scenarios %}
+            <div class="card" style="padding: 0; overflow: hidden; margin-bottom: 2rem;">
+                <table style="margin: 0; border: none;">
+                    <thead>
+                        <tr>
+                            <th>Название</th>
+                            <th>Направление</th>
+                            <th>Класс</th>
+                            <th>Формат</th>
+                            <th>Дата</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for scenario in scenarios %}
+                            <tr>
+                                <td style="font-weight: 500;">{{ scenario.title|default:scenario.theme }}</td>
+                                <td>{{ scenario.get_direction_display }}</td>
+                                <td>{{ scenario.grade }}</td>
+                                <td>{{ scenario.get_format_type_display }}</td>
+                                <td>{{ scenario.scheduled_date|default:"—" }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="card" style="text-align: center; padding: 3rem;">
+                <p style="color: hsl(var(--muted-foreground));">Нет сценариев</p>
+            </div>
+        {% endif %}
+
+        <p style="color: hsl(var(--muted-foreground)); font-size: 0.8rem; text-align: center;">
+            Это страница только для просмотра. Редактирование доступно в личном кабинете.
+        </p>
+    </div>
+</section>
+{% endblock %}

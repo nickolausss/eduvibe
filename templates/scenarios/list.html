@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section style="padding: 2rem 0;">
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.5rem;">
+            <h2 style="margin: 0; font-size: clamp(1.3rem, 3vw, 1.6rem);">Мои сценарии</h2>
+            <a href="{% url 'scenario-create' %}" class="btn btn-primary">+ Создать новый</a>
+        </div>
+
+        {% if request.GET.bind_date %}
+            <p style="color: hsl(var(--primary)); text-align: center; margin-bottom: 1rem; font-weight: 500; font-size: 0.9rem;">
+                Выберите сценарий для добавления на {{ request.GET.bind_date }}
+            </p>
+        {% endif %}
+
+        {% if scenarios %}
+            <div class="responsive-table" style="overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 10px; border: 1px solid hsl(var(--border));">
+                <table style="margin: 0; border: none; min-width: 650px;">
+                    <thead>
+                        <tr>
+                            <th>Название</th>
+                            <th>Направление</th>
+                            <th>Класс</th>
+                            <th>Формат</th>
+                            <th>Дата</th>
+                            <th style="min-width: 100px; text-align: center;">Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for scenario in scenarios %}
+                            <tr>
+                                <td style="font-weight: 500;">{{ scenario.title|default:scenario.theme }}</td>
+                                <td>{{ scenario.get_direction_display }}</td>
+                                <td>{{ scenario.grade }}</td>
+                                <td>{{ scenario.get_format_type_display }}</td>
+                                <td>{{ scenario.scheduled_date|default:"—" }}</td>
+                                <td style="text-align: center;">
+                                    <div style="display: flex; gap: 0.3rem; justify-content: center;">
+                                        <a href="{% url 'scenario-detail' scenario.pk %}" class="btn btn-sm btn-outline">Смотреть</a>
+                                        {% if request.GET.bind_date %}
+                                            <a href="#" class="btn btn-sm btn-primary add-to-calendar-btn" data-pk="{{ scenario.pk }}" data-date="{{ request.GET.bind_date }}">Привязать</a>
+                                        {% else %}
+                                            <a href="{% url 'calendar' %}?set_scenario={{ scenario.pk }}" class="btn btn-sm btn-outline">В календарь</a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="card" style="text-align: center; padding: 3rem 1.5rem;">
+                <p style="font-size: 1rem; color: hsl(var(--muted-foreground)); margin-bottom: 1.5rem;">У вас пока нет сценариев</p>
+                <a href="{% url 'scenario-create' %}" class="btn btn-primary">Создать первый сценарий</a>
+            </div>
+        {% endif %}
+    </div>
+</section>
+
+<style>
+    @media (max-width: 480px) {
+        th, td { font-size: 0.75rem; padding: 0.4rem 0.3rem; }
+        .btn-sm { padding: 0.3rem 0.4rem; font-size: 0.7rem; }
+    }
+</style>
+
+<script>
+document.querySelectorAll('.add-to-calendar-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        const pk = this.dataset.pk;
+        const dateStr = this.dataset.date;
+        fetch(`/scenarios/${pk}/set-date/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: `date=${dateStr}`
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.status === 'success') {
+                window.location.href = '/calendar/';
+            } else {
+                alert('Ошибка: ' + (data.error || 'не удалось'));
+            }
+        });
+    });
+});
+
+function getCSRFToken() {
+    const c = document.cookie.split('; ').find(r => r.startsWith('csrftoken='));
+    return c ? c.split('=')[1] : '';
+}
+</script>
+{% endblock %}

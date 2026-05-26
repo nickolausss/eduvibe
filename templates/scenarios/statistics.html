@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section style="padding: 2rem 0;">
+    <div class="container" style="max-width: 1100px;">
+        <h2 style="margin-bottom: 0.5rem; font-size: clamp(1.3rem, 3vw, 1.6rem);">Статистика</h2>
+        <p style="color: hsl(var(--muted-foreground)); margin-bottom: 1.5rem; font-size: 0.9rem;">Аналитика использования сервиса</p>
+
+        <div class="stats-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 1.5rem;">
+            <div class="stat-card"><div class="stat-value">{{ total_count }}</div><div class="stat-label">Всего</div></div>
+            <div class="stat-card"><div class="stat-value">{{ this_month_count }}</div><div class="stat-label">За месяц</div></div>
+            <div class="stat-card"><div class="stat-value">{{ days_with_events }}</div><div class="stat-label">Дней</div></div>
+            <div class="stat-card"><div class="stat-value">{{ time_saved }}ч</div><div class="stat-label">Экономия</div></div>
+        </div>
+
+        <div class="charts-grid" style="display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1rem;">
+            <div class="chart-card"><h3>Направления</h3><div style="position: relative; height: 250px;"><canvas id="directionChart"></canvas></div></div>
+            <div class="chart-card"><h3>Форматы</h3><div style="position: relative; height: 250px;"><canvas id="formatChart"></canvas></div></div>
+            <div class="chart-card"><h3>По месяцам</h3><div style="position: relative; height: 220px;"><canvas id="monthChart"></canvas></div></div>
+            <div class="chart-card"><h3>По классам</h3><div style="position: relative; height: 220px;"><canvas id="gradeChart"></canvas></div></div>
+        </div>
+
+        <div class="charts-grid" style="display: grid; grid-template-columns: 1fr; gap: 1rem;">
+            <div class="chart-card">
+                <h3>Топ тем</h3>
+                {% if top_themes %}<ol style="padding-left: 1.25rem; margin: 0;">{% for t in top_themes %}<li style="margin: 0.3rem 0; font-size: 0.9rem;">{{ t.theme }} <span style="color: hsl(var(--muted-foreground)); font-size: 0.8rem;">({{ t.count }})</span></li>{% endfor %}</ol>{% else %}<p style="color: hsl(var(--muted-foreground));">Нет данных</p>{% endif %}
+            </div>
+            <div class="chart-card">
+                <h3>Использование ИИ</h3>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 1rem;">
+                    <div class="stat-mini"><div class="stat-value" style="font-size: 1.2rem;">{{ llm_requests }}</div><div class="stat-label">Всего</div></div>
+                    <div class="stat-mini"><div class="stat-value" style="font-size: 1.2rem;">{{ llm_requests_today }}</div><div class="stat-label">Сегодня</div></div>
+                    <div class="stat-mini"><div class="stat-value" style="font-size: 1.2rem; color: {% if requests_remaining <= 5 %}#ef4444{% else %}hsl(var(--primary)){% endif %};">{{ requests_remaining }}</div><div class="stat-label">Осталось</div></div>
+                </div>
+                <div><div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;"><span style="font-size: 0.85rem;">Календарь</span><span style="font-weight: 600; font-size: 0.85rem; color: hsl(var(--primary));">{{ calendar_fill }}%</span></div>
+                <div style="height: 6px; background: hsl(var(--secondary)); border-radius: 3px;"><div style="width: {{ calendar_fill }}%; height: 100%; background: linear-gradient(90deg, hsl(221.2, 83.2%, 53.3%), hsl(262.1, 83.3%, 57.8%)); border-radius: 3px;"></div></div>
+                <p style="font-size: 0.75rem; color: hsl(var(--muted-foreground)); margin-top: 0.25rem;">{{ scheduled_days }} из 30 дней</p></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<style>
+    @media (min-width: 640px) {
+        .stats-grid { grid-template-columns: repeat(4, 1fr); }
+        .charts-grid { grid-template-columns: 1fr 1fr; }
+    }
+    .stat-card { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 10px; padding: 1rem; text-align: center; }
+    .stat-value { font-size: 1.4rem; font-weight: 700; color: hsl(var(--foreground)); }
+    .stat-label { font-size: 0.75rem; color: hsl(var(--muted-foreground)); margin-top: 0.2rem; }
+    .stat-mini { text-align: center; padding: 0.5rem; background: hsl(var(--secondary)); border-radius: 6px; }
+    .chart-card { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 10px; padding: 1rem; }
+    .chart-card h3 { font-size: 0.9rem; color: hsl(var(--foreground)); margin-bottom: 0.5rem; }
+</style>
+
+<script>
+const isDark = document.documentElement.classList.contains('dark');
+const textColor = isDark ? '#e2e8f0' : '#0f172a';
+const gridColor = isDark ? 'rgba(148,163,184,0.1)' : 'rgba(0,0,0,0.06)';
+const colors = ['#3b82f6','#8b5cf6','#ec4899','#f59e0b','#10b981','#06b6d4','#ef4444','#84cc16'];
+
+const directionData = {{ direction_counts|safe }};
+const formatData = {{ format_counts|safe }};
+const gradeData = {{ grade_counts|safe }};
+const monthData = {{ month_counts|safe }};
+const monthNames = {{ month_names|safe }};
+
+const dL = Object.keys(directionData), dV = Object.values(directionData);
+if (dV.some(v=>v>0)) {
+    new Chart(document.getElementById('directionChart'), { type: 'doughnut', data: { labels: dL.filter((_,i)=>dV[i]>0), datasets: [{ data: dV.filter(v=>v>0), backgroundColor: colors, borderColor: isDark?'#1e293b':'#fff', borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: textColor, font: { size: 10 }, padding: 8, usePointStyle: true } } } } });
+}
+
+const fL = Object.keys(formatData), fV = Object.values(formatData);
+if (fV.some(v=>v>0)) {
+    new Chart(document.getElementById('formatChart'), { type: 'bar', data: { labels: fL, datasets: [{ data: fV, backgroundColor: colors, borderRadius: 4, barThickness: 16 }] }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: textColor, font: { size: 10 } }, grid: { color: gridColor } }, y: { ticks: { color: textColor, font: { size: 10 } } } } } });
+}
+
+new Chart(document.getElementById('monthChart'), { type: 'bar', data: { labels: Object.keys(monthData).map(m=>monthNames[m]), datasets: [{ data: Object.values(monthData), backgroundColor: '#3b82f6', borderRadius: 4, barThickness: 14 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { color: textColor, font: { size: 10 } }, grid: { color: gridColor } }, x: { ticks: { color: textColor, font: { size: 10 }, maxRotation: 0 } } } } });
+
+const gL = Object.keys(gradeData).map(g=>g+' кл'), gV = Object.values(gradeData);
+new Chart(document.getElementById('gradeChart'), { type: 'bar', data: { labels: gL, datasets: [{ data: gV, backgroundColor: gV.map((_,i)=>colors[i%8]), borderRadius: 4, barThickness: 12 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { color: textColor, font: { size: 10 } }, grid: { color: gridColor } }, x: { ticks: { color: textColor, font: { size: 10 }, maxRotation: 0 } } } } });
+</script>
+{% endblock %}

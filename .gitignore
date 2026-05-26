@@ -1,0 +1,38 @@
+# Django
+*.log
+*.pot
+*.pyc
+__pycache__/
+db.sqlite3
+media/
+staticfiles/
+
+# Виртуальное окружение
+venv/
+env/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Системные файлы
+.DS_Store
+Thumbs.db
+
+# Файл с секретами
+.env
+
+# Файлы миграций
+*/migrations/00*.py
+!*/migrations/__init__.py
+
+# Шрифты (если не загружены в репозиторий)
+static/fonts/
+
+# Временные файлы
+*.tmp
+*.bak

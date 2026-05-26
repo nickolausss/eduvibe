@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<section style="padding: 3rem 0;">
+    <div class="container" style="max-width: 720px;">
+
+        <div class="card">
+            <p style="font-weight: 600; margin-bottom: 0.75rem;">Параметры:</p>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.5rem;">
+                <span class="badge">{{ scenario.get_direction_display }}</span>
+                <span class="badge">{{ scenario.grade }} класс</span>
+                <span class="badge">{{ scenario.get_format_type_display }}</span>
+                <span class="badge">{{ scenario.duration }} мин.</span>
+            </div>
+            <p style="color: hsl(var(--muted-foreground));">Тема: {{ scenario.theme }}</p>
+        </div>
+
+        <div style="text-align: center; padding: 2rem 0;">
+            <div id="generation-progress">
+                <button id="start-generation" onclick="startGeneration()" class="btn btn-primary btn-lg" {% if not auto_start %}style="display:block;"{% else %}style="display:none;"{% endif %}>
+                    🚀 Сгенерировать сценарий
+                </button>
+                
+                <div id="progress-bar" {% if not auto_start %}style="display:none;"{% endif %}>
+                    <div id="progress-text" style="color: hsl(var(--foreground)); font-weight: 500; margin-bottom: 1rem; min-height: 24px;"></div>
+                    <div id="progress-track" style="width: 100%; height: 8px; background: hsl(var(--secondary)); border-radius: 4px; overflow: hidden; max-width: 400px; margin: 0 auto 0.5rem;">
+                        <div id="progress-fill" style="width: 0%; height: 100%; background: linear-gradient(135deg, hsl(221.2, 83.2%, 53.3%), hsl(262.1, 83.3%, 57.8%)); border-radius: 4px; transition: width 0.5s ease;"></div>
+                    </div>
+                    <div id="progress-status" style="color: hsl(var(--muted-foreground)); font-size: 0.85rem;"></div>
+                </div>
+            </div>
+
+            <div id="generation-result" style="display: none; text-align: left;">
+                <h3 style="color: hsl(142, 76%, 30%);">✅ Сценарий сгенерирован!</h3>
+                <div id="result-content" style="background: hsl(var(--card)); border-radius: 0.5rem; padding: 1rem; margin: 1rem 0; border: 1px solid hsl(var(--border)); max-height: 300px; overflow-y: auto;"></div>
+                <div style="display: flex; gap: 0.75rem;">
+                    <a href="{% url 'scenario-detail' scenario.pk %}" class="btn btn-primary">Посмотреть сценарий</a>
+                    <a href="{% url 'scenario-edit' scenario.pk %}" class="btn btn-outline">Редактировать</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+const progressPhrases = [
+    "☕ Пью кофе и придумываю структуру...",
+    "📝 Набрасываю цели по ФГОС...",
+    "📚 Листаю учебник — ищу интересные вопросы...",
+    "🤔 Придумываю активности для детей...",
+    "🎯 Подбираю игровые механики...",
+    "📋 Заполняю журнал — добавляю рефлексию...",
+    "💭 Придумываю вопросы для обратной связи...",
+    "✏️ Красная ручка в деле — правлю этапы...",
+    "🔧 Подбираю материалы и оборудование...",
+    "⚠️ Просчитываю риски и запасные варианты...",
+    "💡 Собираю советы для учителя...",
+    "🎤 Пишу сценарий для ведущего...",
+    "✅ Составляю чек-лист подготовки...",
+    "🏠 Придумываю домашнее задание...",
+    "📎 Собираю всё воедино...",
+    "🗂 Перебираю методички в голове...",
+    "🍎 Взял яблоко со стола — работа кипит...",
+    "📞 Звонит воображаемый завуч — игнорирую...",
+    "🧹 Смахнул пыль с классного журнала...",
+    "🖍 Нашёл мелок за ухом — как он туда попал?",
+    "🎒 Представил что снова в школу...",
+    "☕ Кофе закончился — перехожу на чай...",
+    "📝 Проверяю чтобы цели были по ФГОС...",
+    "🔔 Звонок на урок? Нет, просто в голове звенит...",
+    "📊 Строю график вовлечённости класса...",
+    "🎨 Раскрашиваю этапы в яркие цвета...",
+    "🤝 Договариваюсь с воображаемым классом...",
+    "📋 Список материалов почти готов...",
+    "🔍 Ищу опечатки в вопросах...",
+    "🎭 Подбираю реквизит для легенды...",
+    "📣 Репетирую речь учителя перед зеркалом...",
+    "🧩 Собираю пазл из этапов...",
+    "🌪 Устроил мозговой штурм с самим собой...",
+    "🦸 Представил что я супер-методист...",
+    "🎪 Разложил этапы как цирковую программу...",
+    "🧑‍🏫 Вошёл в роль строгого но справедливого...",
+    "📓 Записал всё в воображаемый ежедневник...",
+    "🎮 Может поиграть в Hearthstone...",
+];
+
+let progressInterval;
+const totalStages = 6;
+
+function startGeneration() {
+    document.getElementById('start-generation').style.display = 'none';
+    document.getElementById('progress-bar').style.display = 'block';
+    
+    const progressText = document.getElementById('progress-text');
+    const progressFill = document.getElementById('progress-fill');
+    const progressStatus = document.getElementById('progress-status');
+    
+    progressInterval = setInterval(() => {
+        const randomIndex = Math.floor(Math.random() * progressPhrases.length);
+        progressText.textContent = progressPhrases[randomIndex];
+    }, 5000);
+
+    fetch('{% url "scenario-generate-api" scenario.pk %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        clearInterval(progressInterval);
+        
+        let progress = 0;
+        const fillInterval = setInterval(() => {
+            progress += 15;
+            if (progress >= 90) {
+                clearInterval(fillInterval);
+                progressFill.style.width = '90%';
+                progressStatus.textContent = '✨ Почти готово, финальные штрихи...';
+                
+                setTimeout(() => {
+                    progressFill.style.width = '100%';
+                    progressText.textContent = '';
+                    progressStatus.textContent = '✅ Готово!';
+                }, 1500);
+            } else {
+                progressFill.style.width = progress + '%';
+                progressStatus.textContent = `Генерация ${Math.floor(progress / 15)}/${totalStages}...`;
+            }
+        }, 400);
+
+        setTimeout(() => {
+            document.getElementById('progress-bar').style.display = 'none';
+            document.getElementById('generation-result').style.display = 'block';
+
+            if (data.status === 'success') {
+                const result = data.result;
+                let html = '<h4>' + result.title + '</h4>';
+                html += '<p style="color: hsl(var(--muted-foreground));"><strong>Цели:</strong> ' + (result.goals?.educational || '') + '</p>';
+                html += '<p style="color: hsl(var(--muted-foreground));"><strong>Этапов:</strong> ' + result.stages.length + '</p>';
+                result.stages.forEach(function(stage) {
+                    html += '<p style="color: hsl(var(--muted-foreground));">• ' + stage.name + ' (' + stage.duration_minutes + ' мин)</p>';
+                });
+                document.getElementById('result-content').innerHTML = html;
+            } else {
+                document.getElementById('result-content').innerHTML = '<p style="color: red;">Ошибка: ' + (data.error || 'Неизвестная') + '</p>';
+            }
+        }, 3000);
+    })
+    .catch(error => {
+        clearInterval(progressInterval);
+        document.getElementById('progress-bar').style.display = 'none';
+        showErrorToast('Ой, что-то пошло не так... хм.. наверно на сервер снова пролили кофе ☕');
+    });
+}
+
+function showErrorToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'error-toast';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => toast.classList.add('show'), 10);
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => {
+            toast.remove();
+            document.getElementById('start-generation').style.display = 'block';
+        }, 300);
+    }, 4000);
+}
+
+{% if auto_start %}
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(startGeneration, 500);
+});
+{% endif %}
+</script>
+{% endblock %}
