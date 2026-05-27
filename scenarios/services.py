@@ -41,7 +41,6 @@ class DeepSeekClientPool:
         if not self.clients:
             from openai import OpenAI
             api_key = settings.YANDEX_API_KEY
-            logger.info(f"YANDEX_API_KEY starts with: {api_key[:10] if api_key else 'EMPTY'}...")
             return OpenAI(
                 api_key=api_key,
                 base_url="https://ai.api.cloud.yandex.net/v1",
@@ -60,7 +59,6 @@ class DeepSeekClient:
         if not pool:
             from openai import OpenAI
             api_key = settings.YANDEX_API_KEY
-            logger.info(f"DeepSeekClient: YANDEX_API_KEY starts with: {api_key[:10] if api_key else 'EMPTY'}...")
             self.client = OpenAI(
                 api_key=api_key,
                 base_url="https://ai.api.cloud.yandex.net/v1",
@@ -170,7 +168,7 @@ class DeepSeekClient:
                     ],
                     temperature=0.2,
                     max_tokens=8000,
-                    timeout=90,
+                    timeout=60,
                     extra_headers={"X-Yandex-Project-ID": self.project_id}
                 )
 
@@ -189,14 +187,14 @@ class DeepSeekClient:
                     logger.info(f"✅ Валидация успешна")
                     return result
                 except ValueError:
-                    logger.warning(f"⚠️ Валидатор вернул битый JSON, пробуем снова")
+                    logger.warning(f"⚠️ Валидатор вернул битый JSON")
                     if attempt < max_retries:
                         time.sleep(3)
                         continue
                     return json.loads(scenario_json)
 
             except Exception as e:
-                logger.error(f"❌ Ошибка валидации: {type(e).__name__}: {e}")
+                logger.warning(f"⚠️ Валидация прервана: {type(e).__name__}")
                 if attempt < max_retries:
                     time.sleep(5)
                     continue
