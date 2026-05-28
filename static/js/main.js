@@ -26,62 +26,23 @@ document.querySelectorAll('.nav-links a').forEach(link => {
     }
 });
 
-// === 3. Кнопка «Наверх» ===
-const scrollBtn = document.createElement('button');
-scrollBtn.className = 'scroll-top-btn';
-scrollBtn.title = 'Наверх';
-const img = document.createElement('img');
-img.src = '/static/images/arrow-up.png';
-img.alt = '↑';
-scrollBtn.appendChild(img);
-document.body.appendChild(scrollBtn);
-
-scrollBtn.addEventListener('click', () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-});
-
-window.addEventListener('scroll', () => {
-    if (window.scrollY > 400) {
-        scrollBtn.style.opacity = '1';
-        scrollBtn.style.pointerEvents = 'auto';
-    } else {
-        scrollBtn.style.opacity = '0';
-        scrollBtn.style.pointerEvents = 'none';
-    }
-});
-
-// === 4. Копирование всего сценария ===
+// === 3. Копирование всего сценария ===
 function copyFullScenario() {
     const container = document.querySelector('section .container');
     if (!container) return;
 
     const clone = container.cloneNode(true);
-    
     clone.querySelectorAll('.btn, button, .actions').forEach(el => el.remove());
-
-    clone.querySelectorAll('details').forEach(d => {
-        d.setAttribute('open', '');
-    });
-
+    clone.querySelectorAll('details').forEach(d => d.setAttribute('open', ''));
     clone.querySelectorAll('details ul li, ul li').forEach(li => {
         li.textContent = '• ' + li.textContent.replace(/^[•\-]\s*/, '');
     });
 
-    const html = clone.innerHTML.trim();
-    const text = clone.innerText.trim()
-        .replace(/\n{3,}/g, '\n\n')
-        .replace(/^\s+/gm, '');
-
-    const blob = new Blob([html], { type: 'text/html' });
-    const clipboardItem = new ClipboardItem({
-        'text/html': blob,
-        'text/plain': new Blob([text], { type: 'text/plain' })
-    });
-
-    navigator.clipboard.write([clipboardItem]).then(() => {
-        showToast('✅ Сценарий скопирован в буфер обмена');
+    const text = clone.innerText.trim().replace(/\n{3,}/g, '\n\n').replace(/^\s+/gm, '');
+    navigator.clipboard.writeText(text).then(() => {
+        showToast('Сценарий скопирован');
     }).catch(() => {
-        showToast('❌ Не удалось скопировать');
+        showToast('Не удалось скопировать');
     });
 }
 
@@ -91,7 +52,6 @@ function showToast(message) {
     toast.className = 'toast';
     toast.textContent = message;
     document.body.appendChild(toast);
-    
     setTimeout(() => toast.classList.add('show'), 10);
     setTimeout(() => {
         toast.classList.remove('show');
@@ -99,6 +59,7 @@ function showToast(message) {
     }, 4000);
 }
 
+// === Шеринг сценария ===
 async function shareScenario(pk) {
     try {
         const response = await fetch(`/scenarios/${pk}/share/`, { 
@@ -108,41 +69,11 @@ async function shareScenario(pk) {
         const data = await response.json();
         if (data.status === 'success') {
             navigator.clipboard.writeText(data.url).then(() => {
-                showToast('✅ Ссылка скопирована! Только тот, у кого есть ссылка, увидит сценарий.');
-                // Меняем кнопку без перезагрузки
-                const btns = document.querySelectorAll('.actions button, .actions a');
-                btns.forEach(b => {
-                    if (b.textContent.includes('Поделиться')) {
-                        b.outerHTML = `<button onclick="unshareScenario(${pk})" class="btn btn-outline">🔗 Удалить ссылку</button>`;
-                    }
-                });
+                showToast('Ссылка скопирована');
             });
         }
     } catch (e) {
-        showToast('❌ Ошибка');
-    }
-}
-
-async function shareScenario(pk) {
-    try {
-        const response = await fetch(`/scenarios/${pk}/share/`, { 
-            method: 'POST',
-            headers: { 'X-CSRFToken': getCSRFToken() }
-        });
-        const data = await response.json();
-        if (data.status === 'success') {
-            navigator.clipboard.writeText(data.url).then(() => {
-                showToast('✅ Ссылка скопирована!');
-            });
-            // Меняем кнопку
-            const btn = document.querySelector('button[onclick*="shareScenario"]');
-            if (btn) {
-                btn.textContent = '🔗 Удалить ссылку';
-                btn.setAttribute('onclick', `unshareScenario(${pk})`);
-            }
-        }
-    } catch (e) {
-        showToast('❌ Ошибка');
+        showToast('Ошибка');
     }
 }
 
@@ -154,16 +85,10 @@ async function unshareScenario(pk) {
         });
         const data = await response.json();
         if (data.status === 'success') {
-            showToast('🔒 Ссылка удалена.');
-            // Меняем кнопку обратно
-            const btn = document.querySelector('button[onclick*="unshareScenario"]');
-            if (btn) {
-                btn.textContent = '📋 Поделиться';
-                btn.setAttribute('onclick', `shareScenario(${pk})`);
-            }
+            showToast('Ссылка удалена');
         }
     } catch (e) {
-        showToast('❌ Ошибка');
+        showToast('Ошибка');
     }
 }
 
@@ -177,7 +102,7 @@ function toggleTheme() {
     localStorage.setItem('theme', isDark ? 'dark' : 'light');
 }
 
-// Получение CSRF-токена
+// === CSRF-токен ===
 function getCSRFToken() {
     const cookie = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
     return cookie ? cookie.split('=')[1] : '';
@@ -185,34 +110,14 @@ function getCSRFToken() {
 
 // === Полноэкранный режим ===
 function toggleFullscreen() {
-    const header = document.querySelector('.navbar');
-    const footer = document.querySelector('.footer');
-    const btn = document.getElementById('fullscreen-btn');
-    
-    const isFullscreen = document.body.classList.toggle('fullscreen-mode');
-    
-    if (isFullscreen) {
-        header.style.display = 'none';
-        footer.style.display = 'none';
-        btn.textContent = '✕ Выйти';
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
     } else {
-        header.style.display = '';
-        footer.style.display = '';
-        btn.textContent = '📺 На весь экран';
+        document.exitFullscreen();
     }
 }
 
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && document.body.classList.contains('fullscreen-mode')) {
-        toggleFullscreen();
-    }
-});
-
-function getCSRFToken() {
-    const cookie = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
-    return cookie ? cookie.split('=')[1] : '';
-}
-
+// === Привязка к дате ===
 function bindScenarioToDate(pk, dateStr) {
     fetch(`/scenarios/${pk}/set-date/`, {
         method: 'POST',
@@ -225,10 +130,8 @@ function bindScenarioToDate(pk, dateStr) {
     .then(response => response.json())
     .then(data => {
         if (data.status === 'success') {
-            showToast('✅ Сценарий добавлен в календарь');
+            showToast('Сценарий добавлен в календарь');
             setTimeout(() => { window.location.href = '/calendar/'; }, 800);
-        } else {
-            showToast('❌ Ошибка');
         }
     });
 }

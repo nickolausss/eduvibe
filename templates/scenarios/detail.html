@@ -246,17 +246,17 @@
         <span class="btn-icon">📋</span>
         <span class="btn-text">Копировать</span>
     </button>
-    {% if scenario.share_key %}
-        <button onclick="unshareScenario({{ scenario.pk }})" class="side-action-btn">
+    
+    <button id="share-toggle-btn" class="side-action-btn" data-pk="{{ scenario.pk }}" data-shared="{% if scenario.share_key %}true{% else %}false{% endif %}">
+        {% if scenario.share_key %}
             <span class="btn-icon">🔗</span>
             <span class="btn-text">Отозвать доступ</span>
-        </button>
-    {% else %}
-        <button onclick="shareScenario({{ scenario.pk }})" class="side-action-btn">
+        {% else %}
             <span class="btn-icon">📤</span>
             <span class="btn-text">Поделиться</span>
-        </button>
-    {% endif %}
+        {% endif %}
+    </button>
+    
     <button onclick="openQRCode({{ scenario.pk }})" class="side-action-btn">
         <span class="btn-icon">📱</span>
         <span class="btn-text">На планшет</span>
@@ -276,99 +276,187 @@
 </div>
 
 <script>
-function showToast(message) {
-    let toast = document.querySelector('.toast-notification');
-    if (!toast) {
-        toast = document.createElement('div');
-        toast.className = 'toast-notification';
-        document.body.appendChild(toast);
+(function() {
+    'use strict';
+
+    // ---------- Toast ----------
+    function showToast(message) {
+        var toast = document.querySelector('.toast-notification');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.className = 'toast-notification';
+            document.body.appendChild(toast);
+        }
+        toast.textContent = message;
+        toast.classList.add('show');
+        clearTimeout(toast._timeout);
+        toast._timeout = setTimeout(function() {
+            toast.classList.remove('show');
+        }, 3000);
     }
-    toast.textContent = message;
-    toast.classList.add('show');
-    clearTimeout(toast._timeout);
-    toast._timeout = setTimeout(() => {
-        toast.classList.remove('show');
-    }, 3000);
-}
 
-function copyFullScenario() {
-    const container = document.querySelector('section .container');
-    if (!container) return;
-    const text = container.innerText.trim();
-    navigator.clipboard.writeText(text).then(() => {
-        showToast('Сценарий скопирован');
-    }).catch(() => {
-        showToast('Не удалось скопировать');
-    });
-}
+    // ---------- Копирование ----------
+    window.copyFullScenario = function() {
+        var container = document.querySelector('section .container');
+        if (!container) return;
+        var text = container.innerText.trim();
+        navigator.clipboard.writeText(text).then(function() {
+            showToast('Сценарий скопирован');
+        }).catch(function() {
+            showToast('Не удалось скопировать');
+        });
+    };
 
-async function shareScenario(pk) {
-    try {
-        const response = await fetch(`/scenarios/${pk}/share/`, { 
+    // ---------- Кнопка Поделиться / Отозвать ----------
+    function setupShareButton() {
+        var btn = document.getElementById('share-toggle-btn');
+        if (!btn) return;
+
+        var pk = btn.getAttribute('data-pk');
+        var isShared = btn.getAttribute('data-shared') === 'true';
+
+        btn.onclick = null;
+
+        if (isShared) {
+            btn.innerHTML = '<span class="btn-icon">🔗</span><span class="btn-text">Отозвать доступ</span>';
+            btn.onclick = function(e) {
+                e.preventDefault();
+                unshareScenario(pk);
+            };
+        } else {
+            btn.innerHTML = '<span class="btn-icon">📤</span><span class="btn-text">Поделиться</span>';
+            btn.onclick = function(e) {
+                e.preventDefault();
+                shareScenario(pk);
+            };
+        }
+    }
+
+    function shareScenario(pk) {
+        var btn = document.getElementById('share-toggle-btn');
+        if (!btn) return;
+        btn.style.opacity = '0.5';
+
+        fetch('/scenarios/' + pk + '/share/', {
             method: 'POST',
             headers: { 'X-CSRFToken': getCSRFToken() }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.status === 'success') {
+                navigator.clipboard.writeText(data.url).then(function() {
+                    showToast('Ссылка скопирована — доступ открыт');
+                    btn.setAttribute('data-shared', 'true');
+                    setupShareButton();
+                });
+            } else {
+                showToast('Ошибка: ' + (data.error || 'неизвестная ошибка'));
+            }
+        })
+        .catch(function() {
+            showToast('Ошибка соединения');
+        })
+        .finally(function() {
+            btn.style.opacity = '1';
         });
-        const data = await response.json();
-        if (data.status === 'success') {
-            await navigator.clipboard.writeText(data.url);
-            showToast('Ссылка скопирована');
-            setTimeout(() => location.reload(), 500);
-        }
-    } catch (e) {
-        showToast('Ошибка');
     }
-}
 
-async function unshareScenario(pk) {
-    try {
-        const response = await fetch(`/scenarios/${pk}/unshare/`, { 
+    function unshareScenario(pk) {
+        var btn = document.getElementById('share-toggle-btn');
+        if (!btn) return;
+        btn.style.opacity = '0.5';
+
+        fetch('/scenarios/' + pk + '/unshare/', {
             method: 'POST',
             headers: { 'X-CSRFToken': getCSRFToken() }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.status === 'success') {
+                showToast('Доступ закрыт');
+                btn.setAttribute('data-shared', 'false');
+                setupShareButton();
+            } else {
+                showToast('Ошибка: ' + (data.error || 'неизвестная ошибка'));
+            }
+        })
+        .catch(function() {
+            showToast('Ошибка соединения');
+        })
+        .finally(function() {
+            btn.style.opacity = '1';
         });
-        const data = await response.json();
-        if (data.status === 'success') {
-            showToast('Доступ закрыт');
-            setTimeout(() => location.reload(), 500);
+    }
+
+    // ---------- QR-код ----------
+    window.openQRCode = function(pk) {
+        var btn = document.getElementById('share-toggle-btn');
+        var isShared = btn && btn.getAttribute('data-shared') === 'true';
+
+        if (isShared) {
+            loadQRCode(pk);
+        } else {
+            shareScenario(pk);
+            setTimeout(function() {
+                loadQRCode(pk);
+            }, 800);
         }
-    } catch (e) {
-        showToast('Ошибка');
-    }
-}
+    };
 
-function openQRCode(pk) {
-    fetch(`/scenarios/${pk}/qrcode/`).then(r => r.blob()).then(blob => {
-        document.getElementById('qrcode-image').src = URL.createObjectURL(blob);
-        document.getElementById('qrcode-modal').style.display = 'flex';
-        showToast('QR-код готов');
+    function loadQRCode(pk) {
+        fetch('/scenarios/' + pk + '/qrcode/')
+        .then(function(r) { return r.blob(); })
+        .then(function(blob) {
+            document.getElementById('qrcode-image').src = URL.createObjectURL(blob);
+            document.getElementById('qrcode-modal').style.display = 'flex';
+            showToast('QR-код готов');
+        });
+    }
+
+    window.closeQRCode = function() {
+        document.getElementById('qrcode-modal').style.display = 'none';
+    };
+
+    // ---------- Полный экран ----------
+    window.toggleFullscreen = function() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen();
+            var navbar = document.querySelector('.navbar');
+            if (navbar) navbar.style.display = 'none';
+            showToast('Полноэкранный режим');
+        } else {
+            document.exitFullscreen();
+            var navbar = document.querySelector('.navbar');
+            if (navbar) navbar.style.display = '';
+        }
+    };
+
+    document.addEventListener('fullscreenchange', function() {
+        if (!document.fullscreenElement) {
+            var navbar = document.querySelector('.navbar');
+            if (navbar) navbar.style.display = '';
+        }
     });
-}
 
-function closeQRCode() { 
-    document.getElementById('qrcode-modal').style.display = 'none'; 
-}
-
-function toggleFullscreen() {
-    if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen();
-        document.querySelector('.navbar').style.display = 'none';
-        showToast('Полноэкранный режим');
-    } else {
-        document.exitFullscreen();
-        document.querySelector('.navbar').style.display = '';
+    // ---------- CSRF ----------
+    function getCSRFToken() {
+        var cookies = document.cookie.split('; ');
+        for (var i = 0; i < cookies.length; i++) {
+            if (cookies[i].startsWith('csrftoken=')) {
+                return cookies[i].split('=')[1];
+            }
+        }
+        return '';
     }
-}
 
-document.addEventListener('fullscreenchange', function() {
-    if (!document.fullscreenElement) {
-        document.querySelector('.navbar').style.display = '';
-    }
-});
+    // ---------- Модальное окно ----------
+    document.getElementById('qrcode-modal').addEventListener('click', function(e) {
+        if (e.target === this) closeQRCode();
+    });
 
-function getCSRFToken() {
-    const c = document.cookie.split('; ').find(r => r.startsWith('csrftoken='));
-    return c ? c.split('=')[1] : '';
-}
+    // ---------- Старт ----------
+    setupShareButton();
 
-document.getElementById('qrcode-modal').addEventListener('click', function(e) { if (e.target === this) closeQRCode(); });
+})();
 </script>
 {% endblock %}

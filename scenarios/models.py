@@ -168,6 +168,13 @@ class ScenarioVersion(models.Model):
 
 class LLMRequestLog(models.Model):
     session_key = models.CharField('Сессия', max_length=40, db_index=True)
+    client_identifier = models.CharField(
+        'Идентификатор клиента',
+        max_length=512,
+        db_index=True,
+        default='',
+        help_text='IP|UserAgent — не сбрасывается при очистке кук'
+    )
     request_type = models.CharField('Тип запроса', max_length=50)
     tokens_used = models.IntegerField('Потрачено токенов', default=0)
     success = models.BooleanField('Успешно', default=True)
@@ -178,11 +185,12 @@ class LLMRequestLog(models.Model):
         verbose_name = 'Лог запроса к LLM'
         verbose_name_plural = 'Логи запросов к LLM'
         indexes = [
+            models.Index(fields=['client_identifier', '-created_at']),
             models.Index(fields=['session_key', '-created_at']),
         ]
 
     def __str__(self):
-        return f'{self.session_key[:8]}... - {self.request_type} ({self.created_at:%d.%m.%Y %H:%M})'
+        return f'{self.client_identifier[:20]}... - {self.request_type} ({self.created_at:%d.%m.%Y %H:%M})'
 
 
 class ScheduledTheme(models.Model):

@@ -1,11 +1,12 @@
 from pathlib import Path
+from decouple import config
 import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-default-key-change-me')
-DEBUG = os.environ.get('DEBUG', 'False').lower() in ('true', '1', 'yes')
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-default-key-change-me')
+DEBUG = config('DEBUG', default=True, cast=bool)
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*').split(',')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -73,10 +74,10 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-YANDEX_API_KEY = os.environ.get('YANDEX_API_KEY', '')
-YANDEX_PROJECT_ID = os.environ.get('YANDEX_PROJECT_ID', '')
-YANDEX_PROMPT_ID = os.environ.get('YANDEX_PROMPT_ID', '')
-YANDEX_API_KEYS = os.environ.get('YANDEX_API_KEYS', '').split(',')
+YANDEX_API_KEY = config('YANDEX_API_KEY', default='')
+YANDEX_PROJECT_ID = config('YANDEX_PROJECT_ID', default='')
+YANDEX_PROMPT_ID = config('YANDEX_PROMPT_ID', default='')
+YANDEX_API_KEYS = config('YANDEX_API_KEYS', default='').split(',')
 
 CSRF_TRUSTED_ORIGINS = ['https://eduvibe-nickolaussss.amvera.io']
 CSRF_COOKIE_SECURE = False

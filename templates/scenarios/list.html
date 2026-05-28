@@ -24,7 +24,7 @@
                             <th>Класс</th>
                             <th>Формат</th>
                             <th>Дата</th>
-                            <th style="min-width: 100px; text-align: center;">Действия</th>
+                            <th style="min-width: 200px; text-align: center;">Действия</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -43,6 +43,7 @@
                                         {% else %}
                                             <a href="{% url 'calendar' %}?set_scenario={{ scenario.pk }}" class="btn btn-sm btn-outline">В календарь</a>
                                         {% endif %}
+                                        <button onclick="askDeleteScenario({{ scenario.pk }}, '{{ scenario.title|default:scenario.theme|escapejs }}')" class="btn btn-sm btn-outline" style="color: #ef4444; border-color: #ef4444;">Удалить</button>
                                     </div>
                                 </td>
                             </tr>
@@ -59,6 +60,19 @@
     </div>
 </section>
 
+<!-- Модальное окно подтверждения удаления -->
+<div id="confirm-delete-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 1001; justify-content: center; align-items: center; padding: 1rem;">
+    <div style="background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 16px; padding: 2rem; text-align: center; max-width: 380px; width: 100%; box-shadow: 0 20px 50px rgba(0,0,0,0.2);">
+        <p style="font-weight: 600; font-size: 1rem; margin-bottom: 0.5rem; color: hsl(var(--foreground));">Подтвердите удаление</p>
+        <p style="color: hsl(var(--muted-foreground)); font-size: 0.85rem; margin-bottom: 0.5rem;" id="delete-scenario-title"></p>
+        <p style="color: #ef4444; font-size: 0.85rem; margin-bottom: 1.5rem;">Это действие нельзя отменить.</p>
+        <div style="display: flex; gap: 0.5rem;">
+            <button onclick="confirmDeleteScenario()" class="btn btn-danger" style="flex: 1;">Да, удалить</button>
+            <button onclick="closeConfirmDeleteModal()" class="btn btn-outline" style="flex: 1;">Отмена</button>
+        </div>
+    </div>
+</div>
+
 <style>
     @media (max-width: 480px) {
         th, td { font-size: 0.75rem; padding: 0.4rem 0.3rem; }
@@ -67,6 +81,34 @@
 </style>
 
 <script>
+let deleteScenarioPk = null;
+
+function askDeleteScenario(pk, title) {
+    deleteScenarioPk = pk;
+    document.getElementById('delete-scenario-title').textContent = '«' + title + '»';
+    document.getElementById('confirm-delete-modal').style.display = 'flex';
+}
+
+function closeConfirmDeleteModal() {
+    document.getElementById('confirm-delete-modal').style.display = 'none';
+    deleteScenarioPk = null;
+}
+
+function confirmDeleteScenario() {
+    if (!deleteScenarioPk) return;
+    
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `/scenarios/${deleteScenarioPk}/delete/`;
+    form.innerHTML = `<input type="hidden" name="csrfmiddlewaretoken" value="${getCSRFToken()}">`;
+    document.body.appendChild(form);
+    form.submit();
+}
+
+document.getElementById('confirm-delete-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeConfirmDeleteModal();
+});
+
 document.querySelectorAll('.add-to-calendar-btn').forEach(btn => {
     btn.addEventListener('click', function(e) {
         e.preventDefault();

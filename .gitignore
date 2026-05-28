@@ -30,9 +30,6 @@ Thumbs.db
 */migrations/00*.py
 !*/migrations/__init__.py
 
-# Шрифты (если не загружены в репозиторий)
-static/fonts/
-
 # Временные файлы
 *.tmp
 *.bak
