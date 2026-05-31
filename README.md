@@ -203,13 +203,15 @@ source venv/bin/activate
 ### 3. Установить зависимости
 
 ```bash
-pip install -r requirements.txt```
+pip install -r requirements.txt
+```
 
-4. Настроить переменные окружения
+### 4. Настроить переменные окружения
 
-Создать файл .env в корне проекта:
+#### Создать файл .env в корне проекта:
 
 env
+
 SECRET_KEY=your-secret-key-here
 DEBUG=True
 ALLOWED_HOSTS=localhost,127.0.0.1
@@ -218,7 +220,7 @@ YANDEX_PROJECT_ID=your-yandex-project-id
 YANDEX_PROMPT_ID=your-prompt-id
 YANDEX_API_KEYS=key1,key2,key3
 
-Где взять ключи:
+#### Где взять ключи:
 
 Зарегистрироваться в Yandex Cloud
 
@@ -228,35 +230,39 @@ YANDEX_API_KEYS=key1,key2,key3
 
 Узнать PROJECT_ID (Folder ID) в настройках облака
 
-5. Применить миграции
+### 5. Применить миграции
 
-bash
+```bash
 python manage.py migrate
+```
 
-6. Создать суперпользователя (для админки)
+### 6. Создать суперпользователя (для админки)
 
-bash
+```bash
 python manage.py createsuperuser
+```
 
-7. Собрать статику
+### 7. Собрать статику
 
-bash
+```bash
 python manage.py collectstatic --noinput
+```
 
-8. Создать эмбеддинги для RAG (если есть существующие сценарии)
+### 8. Создать эмбеддинги для RAG (если есть существующие сценарии)
 
-bash
+```bash
 python manage.py embed_all_scenarios
+```
 
-9. Запустить сервер разработки
+### 9. Запустить сервер разработки
 
-bash
+```bash
 python manage.py runserver
+```
+
 Открыть в браузере: http://127.0.0.1:8000
 
 Админка: http://127.0.0.1:8000/admin/
-```
-
 
 ---
 
