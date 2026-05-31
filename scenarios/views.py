@@ -531,6 +531,14 @@ def scenario_generate_api(request, pk):
             created_by=session_key,
         )
 
+        # Сохраняем эмбеддинг для RAG
+        try:
+            from .embedding_service import EmbeddingService
+            emb_service = EmbeddingService()
+            emb_service.embed_scenario(scenario)
+        except Exception as e:
+            logger.warning(f"⚠️ Не удалось создать эмбеддинг: {e}")
+
         return JsonResponse({
             'status': 'success',
             'result': result,

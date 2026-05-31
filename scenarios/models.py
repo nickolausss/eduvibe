@@ -1,4 +1,24 @@
+import json
 from django.db import models
+
+
+def parse_stages(stages_json):
+    if not stages_json:
+        return []
+    try:
+        data = json.loads(stages_json)
+        return data if isinstance(data, list) else []
+    except (json.JSONDecodeError, TypeError):
+        return []
+
+
+def count_stages(stages_json):
+    return len(parse_stages(stages_json))
+
+
+def sum_stage_duration(stages_json):
+    stages = parse_stages(stages_json)
+    return sum(s.get('duration_minutes', 0) for s in stages if isinstance(s, dict))
 
 
 class Scenario(models.Model):
@@ -70,35 +90,14 @@ class Scenario(models.Model):
 
     @property
     def stage_count(self):
-        import json
-        try:
-            stages = json.loads(self.stages) if self.stages else []
-            return len(stages) if isinstance(stages, list) else 0
-        except (json.JSONDecodeError, TypeError):
-            return 0
+        return count_stages(self.stages)
 
     @property
     def total_duration_minutes(self):
-        import json
-        try:
-            stages = json.loads(self.stages) if self.stages else []
-            if not isinstance(stages, list):
-                return 0
-            return sum(
-                stage.get('duration_minutes', 0)
-                for stage in stages
-                if isinstance(stage, dict)
-            )
-        except (json.JSONDecodeError, TypeError):
-            return 0
+        return sum_stage_duration(self.stages)
 
 
 class ScenarioVersion(models.Model):
-    """
-    История версий сценария.
-    Сохраняет полный снимок сценария при каждом сохранении.
-    Позволяет восстановить любую предыдущую версию.
-    """
     scenario = models.ForeignKey(
         Scenario,
         on_delete=models.CASCADE,
@@ -106,7 +105,6 @@ class ScenarioVersion(models.Model):
     )
     version_number = models.IntegerField('Номер версии')
 
-    # Полный снимок всех полей сценария
     title = models.CharField('Название', max_length=500, blank=True)
     legend = models.TextField('Легенда', blank=True)
     goals = models.TextField('Цели и результаты', blank=True)
@@ -121,7 +119,6 @@ class ScenarioVersion(models.Model):
     checklist = models.TextField('Чек-лист подготовки', blank=True)
     homework = models.TextField('Домашнее задание', blank=True)
 
-    # Мета-информация о версии
     change_description = models.CharField(
         'Описание изменений',
         max_length=500,
@@ -156,14 +153,7 @@ class ScenarioVersion(models.Model):
 
     @property
     def total_duration(self):
-        import json
-        try:
-            stages = json.loads(self.stages) if self.stages else []
-            if not isinstance(stages, list):
-                return 0
-            return sum(s.get('duration_minutes', 0) for s in stages if isinstance(s, dict))
-        except (json.JSONDecodeError, TypeError):
-            return 0
+        return sum_stage_duration(self.stages)
 
 
 class LLMRequestLog(models.Model):
@@ -194,7 +184,6 @@ class LLMRequestLog(models.Model):
 
 
 class ScheduledTheme(models.Model):
-    """Тема из загруженного плана воспитательной работы."""
     session_key = models.CharField('Сессия', max_length=40, db_index=True)
     theme = models.CharField('Тема', max_length=500)
     grade = models.IntegerField('Класс', null=True, blank=True)
@@ -219,3 +208,31 @@ class ScheduledTheme(models.Model):
 
     def __str__(self):
         return f'{self.date} - {self.theme}'
+
+
+class ScenarioEmbedding(models.Model):
+    """Векторное представление сценария для RAG."""
+    scenario = models.OneToOneField(
+        Scenario,
+        on_delete=models.CASCADE,
+        related_name='embedding'
+    )
+    embedding_json = models.TextField('Эмбеддинг')
+    search_text = models.TextField('Текст для эмбеддинга')
+    created_at = models.DateTimeField('Создан', auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Эмбеддинг сценария'
+        verbose_name_plural = 'Эмбеддинги сценариев'
+        indexes = [
+            models.Index(fields=['created_at']),
+        ]
+
+    def __str__(self):
+        return f'Эмбеддинг для: {self.scenario}'
+
+    def get_embedding(self):
+        return json.loads(self.embedding_json)
+
+    def set_embedding(self, vector):
+        self.embedding_json = json.dumps(vector)

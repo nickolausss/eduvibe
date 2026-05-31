@@ -1,11 +1,24 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <h2>Удалить сценарий?</h2>
-    <p>Вы уверены, что хотите удалить "{{ scenario.title|default:scenario.theme }}"?</p>
-    <form method="post">
-        {% csrf_token %}
-        <button type="submit">Удалить</button>
-        <a href="{% url 'scenario-list' %}">Отмена</a>
-    </form>
+<section style="padding: 3rem 0;">
+    <div class="container" style="max-width: 600px; text-align: center;">
+        <div class="card" style="padding: 2rem;">
+            <h2 style="margin-bottom: 1rem;">Удалить сценарий?</h2>
+            <p style="color: hsl(var(--muted-foreground)); margin-bottom: 1.5rem;">
+                Вы уверены, что хотите удалить «{{ scenario.title|default:scenario.theme }}»?
+            </p>
+            <p style="color: #ef4444; font-size: 0.85rem; margin-bottom: 1.5rem;">
+                Это действие нельзя отменить.
+            </p>
+            <div style="display: flex; gap: 0.75rem; justify-content: center;">
+                <form method="post" style="margin: 0;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Удалить</button>
+                </form>
+                <a href="{% url 'scenario-list' %}" class="btn btn-outline">Отмена</a>
+            </div>
+        </div>
+    </div>
+</section>
 {% endblock %}

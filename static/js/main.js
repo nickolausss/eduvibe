@@ -1,3 +1,9 @@
+// === CSRF-токен (единая версия для всего проекта) ===
+function getCSRFToken() {
+    const cookie = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
+    return cookie ? cookie.split('=')[1] : '';
+}
+
 // === 1. Плавное появление секций при скролле ===
 const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
@@ -48,6 +54,9 @@ function copyFullScenario() {
 
 // === Toast-уведомление ===
 function showToast(message) {
+    const existingToast = document.querySelector('.toast');
+    if (existingToast) existingToast.remove();
+
     const toast = document.createElement('div');
     toast.className = 'toast';
     toast.textContent = message;
@@ -56,40 +65,7 @@ function showToast(message) {
     setTimeout(() => {
         toast.classList.remove('show');
         setTimeout(() => toast.remove(), 300);
-    }, 4000);
-}
-
-// === Шеринг сценария ===
-async function shareScenario(pk) {
-    try {
-        const response = await fetch(`/scenarios/${pk}/share/`, { 
-            method: 'POST',
-            headers: { 'X-CSRFToken': getCSRFToken() }
-        });
-        const data = await response.json();
-        if (data.status === 'success') {
-            navigator.clipboard.writeText(data.url).then(() => {
-                showToast('Ссылка скопирована');
-            });
-        }
-    } catch (e) {
-        showToast('Ошибка');
-    }
-}
-
-async function unshareScenario(pk) {
-    try {
-        const response = await fetch(`/scenarios/${pk}/unshare/`, { 
-            method: 'POST',
-            headers: { 'X-CSRFToken': getCSRFToken() }
-        });
-        const data = await response.json();
-        if (data.status === 'success') {
-            showToast('Ссылка удалена');
-        }
-    } catch (e) {
-        showToast('Ошибка');
-    }
+    }, 3000);
 }
 
 // === Тёмная тема ===
@@ -98,40 +74,28 @@ function toggleTheme() {
     const btn = document.getElementById('theme-btn');
     html.classList.toggle('dark');
     const isDark = html.classList.contains('dark');
-    btn.style.transform = isDark ? 'rotate(180deg)' : 'rotate(0deg)';
+    if (btn) {
+        btn.style.transform = isDark ? 'rotate(180deg)' : 'rotate(0deg)';
+    }
     localStorage.setItem('theme', isDark ? 'dark' : 'light');
-}
-
-// === CSRF-токен ===
-function getCSRFToken() {
-    const cookie = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
-    return cookie ? cookie.split('=')[1] : '';
 }
 
 // === Полноэкранный режим ===
 function toggleFullscreen() {
     if (!document.fullscreenElement) {
         document.documentElement.requestFullscreen();
+        const navbar = document.querySelector('.navbar');
+        if (navbar) navbar.style.display = 'none';
     } else {
         document.exitFullscreen();
+        const navbar = document.querySelector('.navbar');
+        if (navbar) navbar.style.display = '';
     }
 }
 
-// === Привязка к дате ===
-function bindScenarioToDate(pk, dateStr) {
-    fetch(`/scenarios/${pk}/set-date/`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'X-CSRFToken': getCSRFToken()
-        },
-        body: `date=${dateStr}`
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.status === 'success') {
-            showToast('Сценарий добавлен в календарь');
-            setTimeout(() => { window.location.href = '/calendar/'; }, 800);
-        }
-    });
-}
+document.addEventListener('fullscreenchange', function() {
+    if (!document.fullscreenElement) {
+        const navbar = document.querySelector('.navbar');
+        if (navbar) navbar.style.display = '';
+    }
+});

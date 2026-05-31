@@ -13,14 +13,14 @@ from .prompts import (
     build_risks_assessment_tips_prompt,
     build_host_script_checklist_homework_prompt,
     build_regenerate_block_prompt,
+    build_structure_prompt_with_rag,
+    build_all_stages_prompt_with_rag,
 )
 
 logger = logging.getLogger(__name__)
 
 
 class DeepSeekClientPool:
-    """Пул клиентов для параллельных запросов."""
-
     def __init__(self, api_keys, project_id):
         from openai import OpenAI
         self.clients = []
@@ -49,10 +49,11 @@ class DeepSeekClientPool:
         self.index = (self.index + 1) % len(self.clients)
         return client_info['client']
 
+    def get_project_id(self):
+        return self.project_id
+
 
 class DeepSeekClient:
-    """Клиент для YandexGPT 5.1 Pro."""
-
     def __init__(self, pool=None):
         self.pool = pool
         self.project_id = settings.YANDEX_PROJECT_ID
@@ -69,8 +70,13 @@ class DeepSeekClient:
             return self.pool.get_client()
         return self.client
 
-    def generate(self, system_prompt: str, user_input: str, temperature: float = 0.4, max_tokens: int = 7000, max_retries: int = 10) -> dict:
-        """Отправляет запрос. При плохом JSON — переотправляет."""
+    def _get_project_id(self):
+        if self.pool:
+            return self.pool.get_project_id()
+        return self.project_id
+
+    def generate(self, system_prompt: str, user_input: str, temperature: float = 0.4,
+                 max_tokens: int = 7000, max_retries: int = 10) -> dict:
         last_error = None
 
         for attempt in range(1, max_retries + 1):
@@ -88,7 +94,7 @@ class DeepSeekClient:
                     temperature=temperature,
                     max_tokens=max_tokens,
                     timeout=120,
-                    extra_headers={"X-Yandex-Project-ID": self.project_id}
+                    extra_headers={"X-Yandex-Project-ID": self._get_project_id()}
                 )
 
                 elapsed = time.time() - start_time
@@ -102,10 +108,11 @@ class DeepSeekClient:
                 if not choice.message or not choice.message.content:
                     finish = choice.finish_reason if hasattr(choice, 'finish_reason') else 'неизвестно'
                     logger.warning(f"❌ Пустой контент. Причина: {finish}")
+                    last_error = ValueError(f"Пустой контент (причина: {finish})")
                     if attempt < max_retries:
                         time.sleep(5)
                         continue
-                    raise ValueError(f"Пустой контент после {max_retries} попыток")
+                    raise last_error
 
                 output_text = choice.message.content
                 logger.info(f"📝 {len(output_text)} символов")
@@ -119,6 +126,7 @@ class DeepSeekClient:
             except ValueError as e:
                 if "Не удалось распарсить JSON" in str(e):
                     logger.warning(f"⚠️ Плохой JSON, пробуем снова...")
+                    last_error = e
                     if attempt < max_retries:
                         time.sleep(5)
                         continue
@@ -126,15 +134,17 @@ class DeepSeekClient:
 
             except Exception as e:
                 logger.error(f"❌ Ошибка: {type(e).__name__}: {e}")
+                last_error = e
                 if attempt < max_retries:
                     time.sleep(7)
                     continue
                 raise
 
-        raise last_error if last_error else Exception("Не удалось")
+        raise last_error if last_error else Exception("Не удалось выполнить запрос")
 
-    def validate_scenario(self, scenario_json: str, max_retries: int = 3) -> dict:
-        """Отправляет сценарий на проверку модератору. При ошибках возвращает исходный JSON."""
+    def validate_scenario(self, scenario_dict: dict, max_retries: int = 3) -> dict:
+        scenario_json = json.dumps(scenario_dict, ensure_ascii=False)
+
         system_prompt = """Ты — модератор образовательного контента. Проверь сценарий внеурочного занятия.
 
 ## ЧТО ПРОВЕРИТЬ
@@ -169,7 +179,7 @@ class DeepSeekClient:
                     temperature=0.2,
                     max_tokens=8000,
                     timeout=60,
-                    extra_headers={"X-Yandex-Project-ID": self.project_id}
+                    extra_headers={"X-Yandex-Project-ID": self._get_project_id()}
                 )
 
                 if not response.choices or not response.choices[0].message.content:
@@ -177,7 +187,7 @@ class DeepSeekClient:
                     if attempt < max_retries:
                         time.sleep(3)
                         continue
-                    return json.loads(scenario_json)
+                    return scenario_dict
 
                 output_text = response.choices[0].message.content
                 output_text = self._clean_json_response(output_text)
@@ -191,17 +201,17 @@ class DeepSeekClient:
                     if attempt < max_retries:
                         time.sleep(3)
                         continue
-                    return json.loads(scenario_json)
+                    return scenario_dict
 
             except Exception as e:
                 logger.warning(f"⚠️ Валидация прервана: {type(e).__name__}")
                 if attempt < max_retries:
                     time.sleep(5)
                     continue
-                return json.loads(scenario_json)
+                return scenario_dict
 
         logger.warning("⚠️ Все попытки валидации провалились, использую исходный сценарий")
-        return json.loads(scenario_json)
+        return scenario_dict
 
     def _clean_json_response(self, text: str) -> str:
         text = text.strip()
@@ -255,8 +265,6 @@ class DeepSeekClient:
 
 
 class ScenarioGeneratorService:
-    """Сервис генерации сценариев. 6 запросов + 1 валидация."""
-
     SYSTEM_PROMPT = """Ты — агент-методист EduVibe, опытный педагог с 20-летним стажем, эксперт по внеурочной деятельности и воспитательной работе согласно ФГОС.
 
 ## Твои компетенции
@@ -266,61 +274,86 @@ class ScenarioGeneratorService:
 - Методика: проблемное обучение, геймификация, проектный подход, развитие Soft Skills
 
 ## Требования ФГОС
-1. Формирование личностных результатов: осознание российской гражданской идентичности, готовность к саморазвитию, мотивация к социально значимой деятельности
-2. Формирование метапредметных результатов: умение работать в команде, критическое мышление, коммуникативные навыки, умение планировать и оценивать результаты
-3. Соответствие целевым ориентирам воспитания:
-   - НОО (1-4 кл): знающий и любящий свою малую родину, доброжелательный, проявляющий сопереживание
-   - ООО (5-9 кл): сознающий принадлежность к народу России, уважающий духовно-нравственную культуру, проявляющий интерес к познанию
-   - СОО (10-11 кл): осознанно выражающий гражданскую принадлежность, демонстрирующий навыки рефлексии, ориентированный на осознанный выбор профессии
-4. Учёт примерной рабочей программы воспитания: 11 модулей воспитательной работы, календарный план с памятными датами
-5. Соблюдение СанПиН 2.4.3648-20:
-   - Хронометраж не более 45 минут (40 минут для 1 класса)
-   - Обязательные физкультминутки и гимнастика для глаз
-   - Напоминание о проветривании помещения
-   - Учёт норм использования электронных средств обучения по возрастам
+1. Формирование личностных результатов
+2. Формирование метапредметных результатов
+3. Соответствие целевым ориентирам воспитания
+4. Учёт примерной рабочей программы воспитания
+5. Соблюдение СанПиН 2.4.3648-20
 
 ## Правила работы
 1. Всегда отвечай на русском языке.
-2. Учитывай возраст детей: для 1-4 классов — простые инструкции, игра, движение; для 5-8 — соревнования, групповая работа; для 9-11 — дискуссии, аргументация, проект.
-3. Все слова учителя давай ПРЯМОЙ РЕЧЬЮ в кавычках. Не «учитель объясняет», а «Учитель говорит: "Ребята, сегодня мы..."». Распиши дословно, с интонациями.
-4. К каждому вопросу добавляй 2-3 ПРЕДПОЛАГАЕМЫХ ОТВЕТА детей и реакцию учителя на них.
-5. Хронометраж этапов должен строго суммироваться в указанную длительность. Проверь сумму минут!
-6. Придумывай яркие, нешаблонные названия (не "Классный час на тему...", не "Беседа о...").
-7. В рисках указывай КОНКРЕТНЫЕ запасные варианты с примерами прямой речи учителя, а не общие фразы.
-8. Для детей с ОВЗ давай конкретные адаптации с примерами формулировок.
-9. Описывай КОНКРЕТНЫЕ действия. Не «провести обсуждение», а «учитель задаёт вопрос, дети обсуждают в парах 30 секунд, затем 3 человека озвучивают ответы».
+2. Учитывай возраст детей.
+3. Все слова учителя давай ПРЯМОЙ РЕЧЬЮ в кавычках.
+4. К каждому вопросу добавляй 2-3 ПРЕДПОЛАГАЕМЫХ ОТВЕТА детей.
+5. Хронометраж этапов должен строго суммироваться в указанную длительность.
+6. Придумывай яркие, нешаблонные названия.
+7. В рисках указывай КОНКРЕТНЫЕ запасные варианты.
+8. Для детей с ОВЗ давай конкретные адаптации.
+9. Описывай КОНКРЕТНЫЕ действия.
 10. Для каждого этапа указывай КОНКРЕТНЫЕ материалы с количеством.
 
 ## Формат ответа
-Всегда возвращай только JSON, без маркдаун-блоков (```), без пояснений до или после."""
+Всегда возвращай только JSON, без маркдаун-блоков, без пояснений до или после."""
 
     def __init__(self):
         pool = DeepSeekClientPool(settings.YANDEX_API_KEYS, settings.YANDEX_PROJECT_ID)
         self.client = DeepSeekClient(pool=pool)
 
-    def generate_scenario(self, params: dict, session_key: str = None) -> dict:
-        """Генерирует полный сценарий + валидация."""
+    def generate_scenario(self, params: dict, session_key: str = None, use_rag: bool = True) -> dict:
         total_start = time.time()
-        logger.info("🚀 ГЕНЕРАЦИЯ (6 запросов + валидация)")
+        logger.info("🚀 ГЕНЕРАЦИЯ (2 волны + валидация" + (" + RAG" if use_rag else "") + ")")
 
-        # Запрос 1
-        logger.info("=== ЗАПРОС 1/6: Структура ===")
-        prompt1 = build_structure_prompt(params)
+        # ═══════════════ RAG: Поиск похожих сценариев ═══════════════
+        rag_context = ""
+        if use_rag:
+            try:
+                from .embedding_service import EmbeddingService
+                from .vector_search import VectorSearchService
+
+                emb_service = EmbeddingService()
+                search_service = VectorSearchService(emb_service)
+
+                query_text = (
+                    f"Направление: {params.get('direction_label', '')} | "
+                    f"Тема: {params.get('theme', '')} | "
+                    f"Класс: {params.get('grade', '')} | "
+                    f"Формат: {params.get('format_type_label', '')} | "
+                    f"Цель: {params.get('goal', '')} | "
+                    f"Предметы: {params.get('subjects', '')}"
+                )
+
+                similar = search_service.search_similar(query_text, top_k=3, min_similarity=0.3)
+                if similar:
+                    rag_context = search_service.build_rag_context(similar)
+                    logger.info(f"📚 RAG: найдено {len(similar)} примеров")
+                else:
+                    logger.info("📚 RAG: похожих сценариев не найдено")
+            except Exception as e:
+                logger.warning(f"⚠️ RAG не сработал: {e}")
+
+        # ═══════════════ ВОЛНА 1: Структура + Этапы ═══════════════
+        logger.info("=== ВОЛНА 1/2: Структура ===")
+        prompt1 = build_structure_prompt_with_rag(params, rag_context)
         structure = self.client.generate(self.SYSTEM_PROMPT, prompt1, temperature=0.4, max_tokens=7000)
         stages_list = structure.get('stages', [])
         logger.info(f"✅ Структура: {structure.get('title', 'НЕТ')}, этапов: {len(stages_list)}")
 
-        # Запросы 2-6 — параллельно
-        logger.info("=== ЗАПРОСЫ 2-6/6: ПАРАЛЛЕЛЬНО ===")
-        prompt2 = build_all_stages_prompt(stages_list, params, structure)
-        prompt3 = build_reflection_prompt(structure, [], params)
-        prompt4 = build_materials_adaptation_prompt(structure, [], params)
-        prompt5 = build_risks_assessment_tips_prompt(structure, [], {}, params)
-        prompt6 = build_host_script_checklist_homework_prompt(structure, [], {}, params)
+        logger.info("=== ВОЛНА 1/2: Этапы детально ===")
+        prompt2 = build_all_stages_prompt_with_rag(stages_list, params, structure, rag_context)
+        stages_result = self.client.generate(self.SYSTEM_PROMPT, prompt2, temperature=0.4, max_tokens=7000)
+        detailed_stages = stages_result.get('stages', [])
+        logger.info(f"✅ Этапов детально: {len(detailed_stages)}")
 
-        with ThreadPoolExecutor(max_workers=5) as executor:
+        # ═══════════════ ВОЛНА 2: Параллельные запросы ═══════════════
+        logger.info("=== ВОЛНА 2/2: Параллельные запросы ===")
+
+        prompt3 = build_reflection_prompt(structure, detailed_stages, params)
+        prompt4 = build_materials_adaptation_prompt(structure, detailed_stages, params)
+        prompt5 = build_risks_assessment_tips_prompt(structure, detailed_stages, {}, params)
+        prompt6 = build_host_script_checklist_homework_prompt(structure, detailed_stages, {}, params)
+
+        with ThreadPoolExecutor(max_workers=4) as executor:
             futures = {
-                executor.submit(self.client.generate, self.SYSTEM_PROMPT, prompt2, 0.4, 7000, 10): 'stages',
                 executor.submit(self.client.generate, self.SYSTEM_PROMPT, prompt3, 0.4, 7000, 10): 'reflection',
                 executor.submit(self.client.generate, self.SYSTEM_PROMPT, prompt4, 0.4, 7000, 10): 'materials',
                 executor.submit(self.client.generate, self.SYSTEM_PROMPT, prompt5, 0.4, 7000, 10): 'risks',
@@ -337,12 +370,12 @@ class ScenarioGeneratorService:
                     logger.error(f"❌ {key} провален: {e}")
                     raise
 
-        detailed_stages = results['stages'].get('stages', [])
         reflection = results['reflection']
         mat_adapt = results['materials']
         risks_assessment = results['risks']
         host_result = results['host']
 
+        # ═══════════════ СБОРКА ═══════════════
         full_result = {
             "title": structure.get('title', ''),
             "legend": structure.get('legend', ''),
@@ -359,11 +392,10 @@ class ScenarioGeneratorService:
             "homework": host_result.get('homework', {}),
         }
 
-        # Валидация
+        # ═══════════════ ВАЛИДАЦИЯ ═══════════════
         logger.info("=== ВАЛИДАЦИЯ СЦЕНАРИЯ ===")
         try:
-            scenario_json = json.dumps(full_result, ensure_ascii=False)
-            validated = self.client.validate_scenario(scenario_json, max_retries=3)
+            validated = self.client.validate_scenario(full_result, max_retries=3)
             full_result = validated
             logger.info("✅ Сценарий проверен модератором")
         except Exception as e:
@@ -377,25 +409,16 @@ class ScenarioGeneratorService:
         return self.client.generate(self.SYSTEM_PROMPT, user_prompt, temperature=0.4, max_tokens=7000)
 
     def adapt_scenario(self, original_scenario: dict, target_grade: int) -> dict:
+        logger.warning("adapt_scenario вызван, но пока не реализован — возвращаю исходный сценарий")
         return original_scenario
 
 
 class ScenarioVersionService:
-    """
-    Сервис для работы с историей версий сценария.
-    
-    Отвечает за:
-    - Создание новой версии при сохранении
-    - Восстановление предыдущей версии
-    - Сравнение версий
-    - Очистку старых версий
-    """
-    
     MAX_VERSIONS = 50
-    
+
     def __init__(self, scenario):
         self.scenario = scenario
-    
+
     def create_version(self, change_description='', created_by=''):
         last_version = (
             ScenarioVersion.objects
@@ -404,7 +427,7 @@ class ScenarioVersionService:
             .first()
         )
         next_number = (last_version.version_number + 1) if last_version else 1
-        
+
         version = ScenarioVersion.objects.create(
             scenario=self.scenario,
             version_number=next_number,
@@ -424,12 +447,14 @@ class ScenarioVersionService:
             change_description=change_description,
             created_by=created_by,
         )
-        
+
+        self.scenario.save(update_fields=['updated_at'])
+
         logger.info(f'Создана версия {next_number} для сценария {self.scenario.pk}')
         self._cleanup_old_versions()
-        
+
         return version
-    
+
     def restore_version(self, version_number):
         try:
             target_version = ScenarioVersion.objects.get(
@@ -438,12 +463,12 @@ class ScenarioVersionService:
             )
         except ScenarioVersion.DoesNotExist:
             raise ValueError(f'Версия {version_number} не найдена')
-        
+
         self.create_version(
             change_description=f'Автосохранение перед восстановлением версии {version_number}',
             created_by='system'
         )
-        
+
         self.scenario.title = target_version.title
         self.scenario.legend = target_version.legend
         self.scenario.goals = target_version.goals
@@ -458,15 +483,15 @@ class ScenarioVersionService:
         self.scenario.checklist = target_version.checklist
         self.scenario.homework = target_version.homework
         self.scenario.save()
-        
+
         self.create_version(
             change_description=f'Восстановлена версия {version_number}',
             created_by=target_version.created_by
         )
-        
+
         logger.info(f'Сценарий {self.scenario.pk} восстановлен до версии {version_number}')
         return self.scenario
-    
+
     def get_versions(self):
         return (
             ScenarioVersion.objects
@@ -474,7 +499,7 @@ class ScenarioVersionService:
             .order_by('-version_number')
             .only('id', 'version_number', 'change_description', 'created_by', 'created_at')
         )
-    
+
     def get_version(self, version_number):
         try:
             return ScenarioVersion.objects.get(
@@ -483,7 +508,7 @@ class ScenarioVersionService:
             )
         except ScenarioVersion.DoesNotExist:
             return None
-    
+
     def get_latest_version(self):
         return (
             ScenarioVersion.objects
@@ -491,25 +516,25 @@ class ScenarioVersionService:
             .order_by('-version_number')
             .first()
         )
-    
+
     def compare_versions(self, version_number_1, version_number_2):
         v1 = self.get_version(version_number_1)
         v2 = self.get_version(version_number_2)
-        
+
         if not v1 or not v2:
             raise ValueError('Одна из версий не найдена')
-        
+
         differences = {}
         fields_to_compare = [
             'title', 'legend', 'goals', 'stages', 'materials',
             'adaptation', 'reflection', 'risks', 'assessment',
             'teacher_tips', 'host_script', 'checklist', 'homework'
         ]
-        
+
         for field in fields_to_compare:
             val1 = getattr(v1, field)
             val2 = getattr(v2, field)
-            
+
             if field == 'stages':
                 try:
                     stages1 = json.loads(val1) if val1 else []
@@ -517,7 +542,7 @@ class ScenarioVersionService:
                 except (json.JSONDecodeError, TypeError):
                     stages1 = val1 or ''
                     stages2 = val2 or ''
-                
+
                 if isinstance(stages1, list) and isinstance(stages2, list):
                     if len(stages1) != len(stages2):
                         differences[f'{field}_count'] = {'old': len(stages1), 'new': len(stages2)}
@@ -530,14 +555,14 @@ class ScenarioVersionService:
                     differences[field] = {'old_length': len(val1), 'new_length': len(val2)}
                 else:
                     differences[field] = {'old': str(val1)[:200], 'new': str(val2)[:200]}
-        
+
         return {
             'version_1': {'number': v1.version_number, 'created_at': v1.created_at.isoformat(), 'description': v1.change_description},
             'version_2': {'number': v2.version_number, 'created_at': v2.created_at.isoformat(), 'description': v2.change_description},
             'differences': differences,
             'has_changes': len(differences) > 0
         }
-    
+
     def delete_version(self, version_number):
         try:
             version = ScenarioVersion.objects.get(
@@ -546,23 +571,23 @@ class ScenarioVersionService:
             )
         except ScenarioVersion.DoesNotExist:
             return {'status': 'error', 'message': f'Версия {version_number} не найдена'}
-        
+
         total_versions = ScenarioVersion.objects.filter(scenario=self.scenario).count()
-        
+
         if total_versions <= 1:
             scenario_title = self.scenario.title or self.scenario.theme
             scenario_pk = self.scenario.pk
             self.scenario.delete()
             logger.info(f'Сценарий "{scenario_title}" (pk={scenario_pk}) удалён вместе с последней версией {version_number}')
             return {'status': 'scenario_deleted', 'message': f'Сценарий «{scenario_title}» полностью удалён вместе с последней версией'}
-        
+
         version.delete()
         logger.info(f'Удалена версия {version_number} сценария {self.scenario.pk}. Осталось версий: {total_versions - 1}')
         return {'status': 'deleted', 'message': f'Версия {version_number} удалена. Осталось версий: {total_versions - 1}'}
-    
+
     def _cleanup_old_versions(self):
         total = ScenarioVersion.objects.filter(scenario=self.scenario).count()
-        
+
         if total > self.MAX_VERSIONS:
             versions_to_keep = (
                 ScenarioVersion.objects
@@ -570,12 +595,12 @@ class ScenarioVersionService:
                 .order_by('-version_number')
                 .values_list('id', flat=True)[:self.MAX_VERSIONS]
             )
-            
+
             deleted_count, _ = (
                 ScenarioVersion.objects
                 .filter(scenario=self.scenario)
                 .exclude(id__in=versions_to_keep)
                 .delete()
             )
-            
+
             logger.info(f'Очищено {deleted_count} старых версий сценария {self.scenario.pk}')
