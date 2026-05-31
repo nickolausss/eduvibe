@@ -212,6 +212,7 @@ pip install -r requirements.txt
 
 env
 
+```python
 SECRET_KEY=your-secret-key-here
 DEBUG=True
 ALLOWED_HOSTS=localhost,127.0.0.1
@@ -219,6 +220,7 @@ YANDEX_API_KEY=your-yandex-api-key
 YANDEX_PROJECT_ID=your-yandex-project-id
 YANDEX_PROMPT_ID=your-prompt-id
 YANDEX_API_KEYS=key1,key2,key3
+```
 
 #### Где взять ключи:
 
