@@ -197,10 +197,14 @@ venv\Scripts\activate
 
 # Linux / macOS
 source venv/bin/activate
+
 3. Установить зависимости
+
 bash
 pip install -r requirements.txt
+
 4. Настроить переменные окружения
+
 Создать файл .env в корне проекта:
 
 env
@@ -211,6 +215,7 @@ YANDEX_API_KEY=your-yandex-api-key
 YANDEX_PROJECT_ID=your-yandex-project-id
 YANDEX_PROMPT_ID=your-prompt-id
 YANDEX_API_KEYS=key1,key2,key3
+
 Где взять ключи:
 
 Зарегистрироваться в Yandex Cloud
@@ -222,18 +227,27 @@ YANDEX_API_KEYS=key1,key2,key3
 Узнать PROJECT_ID (Folder ID) в настройках облака
 
 5. Применить миграции
+
 bash
 python manage.py migrate
+
 6. Создать суперпользователя (для админки)
+
 bash
 python manage.py createsuperuser
+
 7. Собрать статику
+
 bash
 python manage.py collectstatic --noinput
+
 8. Создать эмбеддинги для RAG (если есть существующие сценарии)
+
 bash
 python manage.py embed_all_scenarios
+
 9. Запустить сервер разработки
+
 bash
 python manage.py runserver
 Открыть в браузере: http://127.0.0.1:8000
