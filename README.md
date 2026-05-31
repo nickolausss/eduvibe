@@ -184,7 +184,7 @@
 ### 1. Клонировать репозиторий
 
 ```bash
-git clone https://github.com/your-username/eduvibe.git
+git clone https://github.com/nickolausss/eduvibe.git
 cd eduvibe
 ```
 
